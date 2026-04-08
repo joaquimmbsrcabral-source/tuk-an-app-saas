@@ -38,28 +38,20 @@ export const JoinPage: React.FC = () => {
     setLoading(true)
 
     try {
-      // Sign up the driver
       await signUp(email, password)
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) {
+        throw new Error('Conta criada. Verifica o teu email para confirmar antes de entrar.')
+      }
 
-      // Get the user ID
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Failed to get user')
+      const { error: rpcError } = await supabase.rpc('signup_driver', {
+        p_company_id: companyId,
+        p_full_name: fullName,
+        p_phone: phone,
+      })
+      if (rpcError) throw rpcError
 
-      // Create profile with role='driver'
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: user.id,
-            company_id: companyId,
-            role: 'driver',
-            full_name: fullName,
-            phone,
-          },
-        ])
-      if (profileError) throw profileError
-
-      navigate('/driver/today')
+      window.location.replace('/driver/today')
     } catch (err: any) {
       setError(err.message || 'Falha ao criar conta')
     } finally {
