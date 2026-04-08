@@ -38,7 +38,7 @@ export const SignupPage: React.FC = () => {
       })
       if (rpcError) throw rpcError
 
-      navigate('/dashboard')
+      window.location.replace('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Falha ao criar conta')
     } finally {
