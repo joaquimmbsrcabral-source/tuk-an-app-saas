@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Outfit', sans-serif;
+}
+
+body {
+  background-color: #FAF3E3;
+  color: #18181A;
+}
+
+.font-lora-italic {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.btn-primary {
+  @apply bg-ink text-yellow font-black px-6 py-3 rounded-xl hover:translate-y-[-2px] transition-transform;
+}
+
+.btn-ghost {
+  @apply border border-ink text-ink px-6 py-3 rounded-xl hover:translate-y-[-2px] transition-transform;
+}
+
+.card-base {
+  @apply bg-white border border-line rounded-2xl p-6 hover:translate-y-[-2px] transition-transform;
+}
+
+input, textarea, select {
+  font-family: 'Outfit', sans-serif;
+}

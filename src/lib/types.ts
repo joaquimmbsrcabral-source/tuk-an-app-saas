@@ -1,0 +1,89 @@
+export type Profile = {
+  id: string
+  company_id: string
+  role: 'owner' | 'driver'
+  full_name: string
+  phone: string
+  created_at: string
+}
+
+export type Company = {
+  id: string
+  name: string
+  nif: string
+  created_at: string
+}
+
+export type TukTuk = {
+  id: string
+  company_id: string
+  plate: string
+  nickname: string
+  status: 'active' | 'maintenance' | 'retired'
+  color: string
+  km: number
+  insurance_expiry: string
+  next_service_km: number
+  notes: string
+  created_at: string
+}
+
+export type Booking = {
+  id: string
+  company_id: string
+  tuktuk_id: string
+  driver_id: string
+  customer_name: string
+  customer_phone: string
+  tour_type: string
+  pax: number
+  start_at: string
+  end_at: string
+  price: number
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+  source: string
+  pickup_location: string
+  notes: string
+  created_at: string
+}
+
+export type Shift = {
+  id: string
+  company_id: string
+  driver_id: string
+  tuktuk_id: string
+  shift_date: string
+  start_at: string
+  end_at: string
+  notes: string
+  created_at: string
+}
+
+export type Payment = {
+  id: string
+  company_id: string
+  booking_id: string
+  method: 'cash' | 'mbway' | 'card' | 'transfer' | 'other'
+  amount: number
+  received_at: string
+  received_by: string
+  notes: string
+  created_at: string
+}
+
+export type MaintenanceLog = {
+  id: string
+  company_id: string
+  tuktuk_id: string
+  log_date: string
+  type: string
+  km: number
+  cost: number
+  notes: string
+  created_at: string
+}
+
+export type AuthUser = {
+  id: string
+  email: string
+}
