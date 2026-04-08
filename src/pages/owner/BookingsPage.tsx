@@ -7,7 +7,7 @@ import { Button } from '../../components/Button'
 import { Modal } from '../../components/Modal'
 import { Input, TextArea, Select } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
-import { Booking, TukTuk } from '../../lib/types'
+import { Booking, TukTuk, TourCatalogItem } from '../../lib/types'
 import { formatDateTime, formatDateShort } from '../../lib/format'
 import { Plus, Trash2 } from 'lucide-react'
 
@@ -15,6 +15,7 @@ export const BookingsPage: React.FC = () => {
   const { profile } = useAuth()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [tuktuks, setTuktuks] = useState<TukTuk[]>([])
+  const [tours, setTours] = useState<TourCatalogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState({
@@ -35,8 +36,36 @@ export const BookingsPage: React.FC = () => {
     if (profile) {
       fetchBookings()
       fetchTuktuks()
+      fetchTours()
     }
   }, [profile])
+
+  const fetchTours = async () => {
+    if (!profile) return
+    const { data } = await supabase
+      .from('tour_catalog')
+      .select('*')
+      .eq('company_id', profile.company_id)
+      .eq('active', true)
+      .order('name')
+    setTours(data || [])
+  }
+
+  const handleSelectTour = (tourId: string) => {
+    const t = tours.find((x) => x.id === tourId)
+    if (!t) {
+      setForm({ ...form, tour_type: '' })
+      return
+    }
+    // Compute end_at from start_at + duration if start set
+    let end_at = form.end_at
+    if (form.start_at) {
+      const start = new Date(form.start_at)
+      const end = new Date(start.getTime() + t.default_duration_min * 60000)
+      end_at = end.toISOString().slice(0, 16)
+    }
+    setForm({ ...form, tour_type: t.name, price: Number(t.default_price), end_at })
+  }
 
   const fetchBookings = async () => {
     if (!profile) return
@@ -179,12 +208,27 @@ export const BookingsPage: React.FC = () => {
             value={form.customer_phone}
             onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
           />
-          <Input
-            label="Tipo de Tour"
-            value={form.tour_type}
-            onChange={(e) => setForm({ ...form, tour_type: e.target.value })}
-            placeholder="Clássico, Privado, etc"
-          />
+          {tours.length > 0 ? (
+            <Select
+              label="Tour"
+              value={tours.find((t) => t.name === form.tour_type)?.id || ''}
+              onChange={(e) => handleSelectTour(e.target.value)}
+            >
+              <option value="">— Escolhe do catálogo —</option>
+              {tours.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} · €{Number(t.default_price).toFixed(2)}
+                </option>
+              ))}
+            </Select>
+          ) : (
+            <Input
+              label="Tipo de Tour"
+              value={form.tour_type}
+              onChange={(e) => setForm({ ...form, tour_type: e.target.value })}
+              placeholder="Adiciona tours em Definições → Catálogo"
+            />
+          )}
           <Input
             label="Passageiros"
             type="number"
