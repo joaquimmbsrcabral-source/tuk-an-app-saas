@@ -23,34 +23,20 @@ export const SignupPage: React.FC = () => {
     setLoading(true)
 
     try {
-      // Sign up the user
+      // Sign up + sign in to ensure we have a session for the RPC
       await signUp(email, password)
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) {
+        // Email confirmation may be required
+        throw new Error('Conta criada. Verifica o teu email para confirmar antes de entrar.')
+      }
 
-      // Get the user ID (we need to wait for auth state to update)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Failed to get user')
-
-      // Create company
-      const { data: company, error: companyError } = await supabase
-        .from('companies')
-        .insert([{ name: companyName }])
-        .select()
-        .single()
-      if (companyError) throw companyError
-
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: user.id,
-            company_id: company.id,
-            role: 'owner',
-            full_name: fullName,
-            phone,
-          },
-        ])
-      if (profileError) throw profileError
+      const { error: rpcError } = await supabase.rpc('signup_owner', {
+        p_company_name: companyName,
+        p_full_name: fullName,
+        p_phone: phone,
+      })
+      if (rpcError) throw rpcError
 
       navigate('/dashboard')
     } catch (err: any) {
