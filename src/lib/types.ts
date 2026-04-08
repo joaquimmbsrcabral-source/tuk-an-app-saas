@@ -4,6 +4,7 @@ export type Profile = {
   role: 'owner' | 'driver'
   full_name: string
   phone: string
+  commission_pct: number
   created_at: string
 }
 
@@ -11,6 +12,18 @@ export type Company = {
   id: string
   name: string
   nif: string
+  default_commission_pct: number
+  created_at: string
+}
+
+export type TourCatalogItem = {
+  id: string
+  company_id: string
+  name: string
+  description: string | null
+  default_price: number
+  default_duration_min: number
+  active: boolean
   created_at: string
 }
 
