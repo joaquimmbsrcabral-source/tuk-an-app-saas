@@ -1,5 +1,5 @@
 import { format, parseISO, isToday, isThisWeek, isThisMonth } from 'date-fns'
-import { ptPT } from 'date-fns/locale'
+import { pt as ptPT } from 'date-fns/locale'
 
 export const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('pt-PT', {
