@@ -40,14 +40,19 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 }
 
 const DriverRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, profile, loading } = useAuth()
+  const { user, profile, loading, signOut } = useAuth()
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>
   }
 
-  if (!user || !profile) {
+  if (!user) {
     return <Navigate to="/login" replace />
+  }
+
+  if (!profile) {
+    signOut().catch(() => {})
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>
   }
 
   if (profile.role !== 'driver') {
@@ -58,14 +63,19 @@ const DriverRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 }
 
 const OwnerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, profile, loading } = useAuth()
+  const { user, profile, loading, signOut } = useAuth()
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>
   }
 
-  if (!user || !profile) {
+  if (!user) {
     return <Navigate to="/login" replace />
+  }
+
+  if (!profile) {
+    signOut().catch(() => {})
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>
   }
 
   if (profile.role !== 'owner') {
@@ -76,14 +86,21 @@ const OwnerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 }
 
 const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth()
+  const { user, profile, loading, signOut } = useAuth()
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>
   }
 
-  if (user) {
-    return <Navigate to="/dashboard" replace />
+  // If we have a session but no profile after loading finished, the session is
+  // stale/broken — sign out so the user can try again instead of looping.
+  if (user && !profile) {
+    signOut().catch(() => {})
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>
+  }
+
+  if (user && profile) {
+    return <Navigate to={profile.role === 'driver' ? '/driver/today' : '/dashboard'} replace />
   }
 
   return <>{children}</>
