@@ -48,10 +48,10 @@ export const DriversPage: React.FC = () => {
 
       const comm: Record<string, number> = {}
       payments?.forEach((p) => {
-        if (!comms[p.received_by]) comms[p.received_by] = 0
-        comms[p.received_by] += p.amount
+        if (!comm[p.received_by]) comm[p.received_by] = 0
+        comm[p.received_by] += Number(p.amount)
       })
-      setCommissions(comms)
+      setCommissions(comm)
     } catch (err) {
       console.error('Error fetching drivers:', err)
     } finally {
@@ -108,8 +108,23 @@ export const DriversPage: React.FC = () => {
               <Card key={driver.id} className="flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-ink mb-1">{driver.full_name}</h3>
-                  <p className="text-sm text-ink2 mb-2">{driver.phone}</p>
-                  <p className="text-sm text-ink2">Comissão recebida: {formatCurrency(commissions[driver.id] || 0)}</p>
+                  <p className="text-sm text-ink2 mb-1">{driver.phone}</p>
+                  <p className="text-sm text-ink2 mb-2">Recebido: {formatCurrency(commissions[driver.id] || 0)}</p>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-ink2">Comissão %:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      defaultValue={driver.commission_pct || 0}
+                      onBlur={async (e) => {
+                        const pct = parseFloat(e.target.value) || 0
+                        await supabase.from('profiles').update({ commission_pct: pct }).eq('id', driver.id)
+                      }}
+                      className="w-20 px-2 py-1 text-sm border-line rounded-btn"
+                    />
+                  </div>
                 </div>
                 <Button onClick={() => handleDelete(driver.id)} variant="secondary" size="sm">
                   <Trash2 size={16} />
