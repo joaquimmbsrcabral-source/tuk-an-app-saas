@@ -19,48 +19,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+
+    const fetchProfile = async (userId: string) => {
+      // 5-second timeout to avoid getting stuck in "Carregando..."
+      const timeout = new Promise<{ data: null }>((resolve) =>
+        setTimeout(() => resolve({ data: null }), 5000)
+      )
+      const query = supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
+      const result = await Promise.race([query, timeout])
+      return (result as any).data
+    }
+
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
+        if (session?.user && !cancelled) {
           setUser({ id: session.user.id, email: session.user.email || '' })
-          const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
-          if (data) setProfile(data)
+          const data = await fetchProfile(session.user.id)
+          if (data && !cancelled) setProfile(data)
         }
       } catch (err) {
         console.error('Auth check failed:', err)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     checkAuth()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (cancelled) return
       if (session?.user) {
         setUser({ id: session.user.id, email: session.user.email || '' })
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-        if (data) setProfile(data)
+        const data = await fetchProfile(session.user.id)
+        if (!cancelled) setProfile(data || null)
       } else {
         setUser(null)
         setProfile(null)
       }
+      if (!cancelled) setLoading(false)
     })
 
-    return () => subscription?.unsubscribe()
+    return () => {
+      cancelled = true
+      subscription?.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
+    if (error) {
+      // Make sure no stale session/state is left behind on failure
+      await supabase.auth.signOut().catch(() => {})
+      if (error.message?.toLowerCase().includes('invalid')) {
+        throw new Error('Email ou senha incorrectos.')
+      }
+      throw new Error(error.message || 'Falha ao fazer login.')
+    }
   }
 
   const signUp = async (email: string, password: string) => {
