@@ -3,200 +3,162 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { OwnerLayout } from '../../components/OwnerLayout'
 import { Card } from '../../components/Card'
-import { Button } from '../../components/Button'
 import { Input, Select } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
-import { Payment } from '../../lib/types'
-import { formatCurrency, formatDate } from '../../lib/format'
-import { Download } from 'lucide-react'
+import { formatCurrency } from '../../lib/format'
+
+type Sale = {
+  id: string
+  driver_id: string | null
+  tour_name: string | null
+  pax: number | null
+  price: number
+  payment_method: string | null
+  tip_amount: number | null
+  sold_at: string
+  notes: string | null
+}
 
 export const FinancePage: React.FC = () => {
   const { profile } = useAuth()
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({
-    method: '',
-    driver: '',
-    startDate: '',
-    endDate: '',
-  })
+  const [sales, setSales] = useState<Sale[]>([])
+  const [filtered, setFiltered] = useState<Sale[]>([])
   const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState({ method: '', driver: '', startDate: '', endDate: '' })
 
   useEffect(() => {
-    if (profile) {
-      fetchPayments()
+    if (profile?.company_id) {
+      fetchSales()
       fetchDrivers()
     }
   }, [profile])
 
-  useEffect(() => {
-    applyFilters()
-  }, [payments, filters])
+  useEffect(() => { applyFilters() }, [sales, filters])
 
-  const fetchPayments = async () => {
-    if (!profile) return
+  const fetchSales = async () => {
+    if (!profile?.company_id) return
     try {
-      const { data } = await supabase
-        .from('payments')
+      const { data, error } = await supabase
+        .from('street_sales')
         .select('*')
         .eq('company_id', profile.company_id)
-        .order('received_at', { ascending: false })
-      setPayments(data || [])
+        .order('sold_at', { ascending: false })
+      if (error) throw error
+      setSales((data as any) || [])
     } catch (err) {
-      console.error('Error fetching payments:', err)
+      console.error('Error fetching sales:', err)
     } finally {
       setLoading(false)
     }
   }
 
   const fetchDrivers = async () => {
-    if (!profile) return
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .eq('company_id', profile.company_id)
-        .eq('role', 'driver')
-      setDrivers((data || []).map((d) => ({ id: d.id, name: d.full_name })))
-    } catch (err) {
-      console.error('Error fetching drivers:', err)
-    }
+    if (!profile?.company_id) return
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('company_id', profile.company_id)
+      .eq('role', 'driver')
+    setDrivers((data || []).map((d: any) => ({ id: d.id, name: d.full_name })))
   }
 
   const applyFilters = () => {
-    let filtered = payments
-
-    if (filters.method) {
-      filtered = filtered.filter((p) => p.method === filters.method)
-    }
-
-    if (filters.driver) {
-      filtered = filtered.filter((p) => p.received_by === filters.driver)
-    }
-
-    if (filters.startDate) {
-      filtered = filtered.filter((p) => new Date(p.received_at) >= new Date(filters.startDate))
-    }
-
-    if (filters.endDate) {
-      const endDate = new Date(filters.endDate)
-      endDate.setHours(23, 59, 59)
-      filtered = filtered.filter((p) => new Date(p.received_at) <= endDate)
-    }
-
-    setFilteredPayments(filtered)
+    let f = sales
+    if (filters.method) f = f.filter((s) => s.payment_method === filters.method)
+    if (filters.driver) f = f.filter((s) => s.driver_id === filters.driver)
+    if (filters.startDate) f = f.filter((s) => new Date(s.sold_at) >= new Date(filters.startDate))
+    if (filters.endDate) f = f.filter((s) => new Date(s.sold_at) <= new Date(filters.endDate + 'T23:59:59'))
+    setFiltered(f)
   }
 
-  const exportCSV = () => {
-    const headers = ['Data', 'Método', 'Motorista', 'Valor', 'Notas']
-    const rows = filteredPayments.map((p) => [
-      formatDate(p.received_at),
-      p.method,
-      p.received_by,
-      formatCurrency(p.amount),
-      p.notes,
-    ])
+  const total = filtered.reduce((sum, s) => sum + Number(s.price || 0), 0)
+  const tips = filtered.reduce((sum, s) => sum + Number(s.tip_amount || 0), 0)
 
-    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `financas-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-  }
-
-  if (loading) return <OwnerLayout><div className="text-center py-12">Carregando...</div></OwnerLayout>
-
-  const total = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
+  const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.name || '—'
 
   return (
     <OwnerLayout>
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center gap-3 justify-between">
-          <h1 className="text-xl sm:text-3xl font-bold text-ink">Finanças</h1>
-          {filteredPayments.length > 0 && (
-            <Button onClick={exportCSV} variant="ghost">
-              <Download size={20} className="mr-2" />
-              Exportar CSV
-            </Button>
-          )}
+        <div>
+          <h1 className="text-2xl font-bold text-ink">Finanças</h1>
+          <p className="text-ink2 text-sm">Todas as tours vendidas pela tua equipa.</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Select
-            label="Método"
-            options={[
-              { value: '', label: 'Todos' },
-              { value: 'cash', label: 'Dinheiro' },
-              { value: 'card', label: 'Cartão' },
-              { value: 'mbway', label: 'MB Way' },
-              { value: 'transfer', label: 'Transferência' },
-              { value: 'other', label: 'Outro' },
-            ]}
-            value={filters.method}
-            onChange={(e) => setFilters({ ...filters, method: e.target.value })}
-          />
-          <Select
-            label="Motorista"
-            options={[
-              { value: '', label: 'Todos' },
-              ...drivers.map((d) => ({ value: d.id, label: d.name })),
-            ]}
-            value={filters.driver}
-            onChange={(e) => setFilters({ ...filters, driver: e.target.value })}
-          />
-          <Input
-            label="Data Início"
-            type="date"
-            value={filters.startDate}
-            onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-          />
-          <Input
-            label="Data Fim"
-            type="date"
-            value={filters.endDate}
-            onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <p className="text-sm text-ink2 mb-1">Total vendas</p>
+            <p className="text-3xl font-bold text-ink">{formatCurrency(total)}</p>
+          </Card>
+          <Card>
+            <p className="text-sm text-ink2 mb-1">Gorjetas</p>
+            <p className="text-3xl font-bold text-ink">{formatCurrency(tips)}</p>
+          </Card>
+          <Card>
+            <p className="text-sm text-ink2 mb-1">Nº de tours</p>
+            <p className="text-3xl font-bold text-ink">{filtered.length}</p>
+          </Card>
         </div>
 
-        {filteredPayments.length === 0 ? (
-          <EmptyState
-            icon="💰"
-            title="Nenhum Pagamento"
-            description="Nenhum pagamento encontrado com os filtros selecionados"
-          />
-        ) : (
-          <>
-            <Card className="bg-yellow bg-opacity-5 border-yellow">
-              <p className="text-sm text-ink2 mb-1">Total</p>
-              <p className="text-3xl font-bold text-ink">{formatCurrency(total)}</p>
-            </Card>
+        <Card>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+            <Select
+              label="Método"
+              value={filters.method}
+              onChange={(e) => setFilters({ ...filters, method: e.target.value })}
+              options={[
+                { value: '', label: 'Todos' },
+                { value: 'cash', label: 'Dinheiro' },
+                { value: 'card', label: 'Cartão' },
+                { value: 'mbway', label: 'MB Way' },
+                { value: 'other', label: 'Outro' },
+              ]}
+            />
+            <Select
+              label="Motorista"
+              value={filters.driver}
+              onChange={(e) => setFilters({ ...filters, driver: e.target.value })}
+              options={[{ value: '', label: 'Todos' }, ...drivers.map((d) => ({ value: d.id, label: d.name }))]}
+            />
+            <Input label="De" type="date" value={filters.startDate} onChange={(e) => setFilters({ ...filters, startDate: e.target.value })} />
+            <Input label="Até" type="date" value={filters.endDate} onChange={(e) => setFilters({ ...filters, endDate: e.target.value })} />
+          </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              {filteredPayments.map((payment) => (
-                <Card key={payment.id} className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-ink mb-1">{payment.received_by}</h3>
-                    <p className="text-sm text-ink2 mb-2">{formatDate(payment.received_at)}</p>
-                    <div className="flex gap-2">
-                      <span className="text-xs px-2 py-1 rounded-btn bg-line bg-opacity-50 text-ink">
-                        {payment.method}
-                      </span>
-                      {payment.notes && (
-                        <p className="text-xs text-ink2">{payment.notes}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-ink text-lg">{formatCurrency(payment.amount)}</p>
-                  </div>
-                </Card>
-              ))}
+          {loading ? (
+            <div className="text-center py-8 text-ink2">A carregar...</div>
+          ) : filtered.length === 0 ? (
+            <EmptyState title="Sem vendas" description="Ainda não há tours vendidas para mostrar." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-line text-left text-ink2">
+                    <th className="py-2 pr-4">Data</th>
+                    <th className="py-2 pr-4">Tour</th>
+                    <th className="py-2 pr-4">Pax</th>
+                    <th className="py-2 pr-4">Motorista</th>
+                    <th className="py-2 pr-4">Método</th>
+                    <th className="py-2 pr-4 text-right">Preço</th>
+                    <th className="py-2 pr-4 text-right">Gorjeta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((s) => (
+                    <tr key={s.id} className="border-b border-line">
+                      <td className="py-2 pr-4 text-ink2">{new Date(s.sold_at).toLocaleString('pt-PT')}</td>
+                      <td className="py-2 pr-4 font-medium text-ink">{s.tour_name || '—'}</td>
+                      <td className="py-2 pr-4">{s.pax || '—'}</td>
+                      <td className="py-2 pr-4 text-ink2">{driverName(s.driver_id)}</td>
+                      <td className="py-2 pr-4 text-ink2">{s.payment_method || '—'}</td>
+                      <td className="py-2 pr-4 text-right font-medium text-ink">{formatCurrency(Number(s.price || 0))}</td>
+                      <td className="py-2 pr-4 text-right text-ink2">{formatCurrency(Number(s.tip_amount || 0))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </>
-        )}
+          )}
+        </Card>
       </div>
     </OwnerLayout>
   )
