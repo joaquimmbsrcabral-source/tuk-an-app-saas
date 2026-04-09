@@ -4,8 +4,9 @@ import { supabase } from '../../lib/supabase'
 import { OwnerLayout } from '../../components/OwnerLayout'
 import { StatCard } from '../../components/StatCard'
 import { formatCurrency, formatDate, isTodayDate, isThisWeekDate, isThisMonthDate } from '../../lib/format'
-import { Payment, Booking } from '../../lib/types'
+import { Payment, Booking, Profile } from '../../lib/types'
 import { TrendingUp } from 'lucide-react'
+import { StatusBadge } from '../../components/StatusBadge'
 
 export const DashboardPage: React.FC = () => {
   const { profile } = useAuth()
@@ -19,6 +20,29 @@ export const DashboardPage: React.FC = () => {
   })
   const [chartData, setChartData] = useState<{ date: string; amount: number }[]>([])
   const [loading, setLoading] = useState(true)
+  const [liveDrivers, setLiveDrivers] = useState<Profile[]>([])
+
+  useEffect(() => {
+    if (!profile) return
+    let cancelled = false
+    const load = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .eq('role', 'driver')
+      if (!cancelled && data) setLiveDrivers(data as Profile[])
+    }
+    load()
+    const channel = supabase
+      .channel('drivers-presence')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `company_id=eq.${profile.company_id}` }, () => load())
+      .subscribe()
+    return () => {
+      cancelled = true
+      supabase.removeChannel(channel)
+    }
+  }, [profile])
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -150,6 +174,28 @@ export const DashboardPage: React.FC = () => {
           <StatCard label="Tours Hoje" value={stats.todayTours} icon="🛺" />
           <StatCard label="Top Motorista (semana)" value={stats.topDriver.name} icon="👤" />
           <StatCard label="Top TukTuk" value={stats.topTuktuk.nickname} icon="🏆" />
+        </div>
+
+        <div className="bg-card border border-line rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-ink">Motoristas Live</h2>
+            <span className="text-xs text-ink2">Atualiza em tempo real</span>
+          </div>
+          {liveDrivers.length === 0 ? (
+            <p className="text-sm text-ink2">Sem motoristas ainda. Convida-os na página Motoristas.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {liveDrivers.map((d) => (
+                <div key={d.id} className="flex items-center justify-between p-3 bg-cream rounded-xl border border-line">
+                  <div>
+                    <div className="font-medium text-ink">{d.full_name || '—'}</div>
+                    <div className="text-xs text-ink2">{d.phone || ''}</div>
+                  </div>
+                  <StatusBadge status={d.status || 'offline'} size="sm" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="bg-card border border-line rounded-2xl p-6">
