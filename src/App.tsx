@@ -10,8 +10,10 @@ import { JoinPage } from './pages/JoinPage'
 // Owner Pages
 import { DashboardPage } from './pages/owner/DashboardPage'
 import { FleetPage } from './pages/owner/FleetPage'
+import { TukTukDetailPage } from './pages/owner/TukTukDetailPage'
 import { BookingsPage } from './pages/owner/BookingsPage'
 import { DriversPage } from './pages/owner/DriversPage'
+import { DriverDetailPage } from './pages/owner/DriverDetailPage'
 import { FinancePage } from './pages/owner/FinancePage'
 import { SettingsPage } from './pages/owner/SettingsPage'
 import { OwnerSchedulePage } from './pages/owner/SchedulePage'
@@ -25,24 +27,6 @@ import { ProfilePage } from './pages/driver/ProfilePage'
 import { StreetSalePage } from './pages/driver/StreetSalePage'
 import { DriverFinancePage } from './pages/driver/FinancePage'
 import { DriverSchedulePage } from './pages/driver/SchedulePage'
-
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, profile, loading } = useAuth()
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>
-  }
-
-  if (!user || !profile) {
-    return <Navigate to="/login" replace />
-  }
-
-  if (profile.role === 'owner') {
-    return <>{children}</>
-  }
-
-  return <Navigate to="/driver/today" replace />
-}
 
 const DriverRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, profile, loading } = useAuth()
@@ -84,22 +68,21 @@ export default function App() {
     <Router>
       <AuthProvider>
         <Routes>
-          {/* Auth Routes */}
           <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
           <Route path="/signup" element={<AuthLayout><SignupPage /></AuthLayout>} />
           <Route path="/join" element={<AuthLayout><JoinPage /></AuthLayout>} />
 
-          {/* Owner Routes */}
           <Route path="/dashboard" element={<OwnerRoute><DashboardPage /></OwnerRoute>} />
           <Route path="/frota" element={<OwnerRoute><FleetPage /></OwnerRoute>} />
+          <Route path="/frota/:id" element={<OwnerRoute><TukTukDetailPage /></OwnerRoute>} />
           <Route path="/reservas" element={<OwnerRoute><BookingsPage /></OwnerRoute>} />
           <Route path="/motoristas" element={<OwnerRoute><DriversPage /></OwnerRoute>} />
+          <Route path="/motoristas/:id" element={<OwnerRoute><DriverDetailPage /></OwnerRoute>} />
           <Route path="/financas" element={<OwnerRoute><FinancePage /></OwnerRoute>} />
           <Route path="/definicoes" element={<OwnerRoute><SettingsPage /></OwnerRoute>} />
           <Route path="/escala" element={<OwnerRoute><OwnerSchedulePage /></OwnerRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
-          {/* Driver Routes */}
           <Route path="/driver/today" element={<DriverRoute><TodayPage /></DriverRoute>} />
           <Route path="/driver/tour/:id" element={<DriverRoute><TourPage /></DriverRoute>} />
           <Route path="/driver/street-sale" element={<DriverRoute><StreetSalePage /></DriverRoute>} />
@@ -108,7 +91,6 @@ export default function App() {
           <Route path="/driver/history" element={<DriverRoute><HistoryPage /></DriverRoute>} />
           <Route path="/driver/profile" element={<DriverRoute><ProfilePage /></DriverRoute>} />
 
-          {/* Fallback */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
