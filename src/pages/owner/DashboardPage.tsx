@@ -180,12 +180,12 @@ export const DashboardPage: React.FC = () => {
     <OwnerLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-3 justify-between">
           <div>
             <h1 className="text-2xl font-black text-ink">Dashboard</h1>
             <p className="text-sm text-ink2 mt-0.5">VisÃ£o geral do negÃ³cio</p>
           </div>
-          <div className="text-xs text-ink2 bg-card border border-line px-3 py-1.5 rounded-lg shadow-card">
+          <div className="hidden sm:flex text-xs text-ink2 bg-card border border-line px-3 py-1.5 rounded-lg shadow-card">
             {new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
         </div>
