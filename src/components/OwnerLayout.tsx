@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Logo } from './Logo'
 import { Button } from './Button'
-import { BarChart3, Box, Calendar, Users, DollarSign, Settings, LogOut } from 'lucide-react'
+import { BarChart3, Box, Calendar, Users, DollarSign, Settings, LogOut, Shield } from 'lucide-react'
 
 interface OwnerLayoutProps {
   children: React.ReactNode
@@ -21,6 +21,7 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
     { path: '/motoristas', label: 'Motoristas', icon: Users },
     { path: '/financas', label: 'Finanças', icon: DollarSign },
     { path: '/definicoes', label: 'Definições', icon: Settings },
+    ...(profile?.is_super_admin ? [{ path: '/admin', label: 'Admin', icon: Shield }] : []),
   ]
 
   const isActive = (path: string) => location.pathname === path
