@@ -183,7 +183,7 @@ export const DashboardPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3 justify-between">
           <div>
             <h1 className="text-2xl font-black text-ink">Dashboard</h1>
-            <p className="text-sm text-ink2 mt-0.5">VisÃ£o geral do negÃ³cio</p>
+            <p className="text-sm text-ink2 mt-0.5">Visão geral do negócio</p>
           </div>
           <div className="hidden sm:flex text-xs text-ink2 bg-card border border-line px-3 py-1.5 rounded-lg shadow-card">
             {new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -192,12 +192,12 @@ export const DashboardPage: React.FC = () => {
 
         {/* KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <StatCard label="Receita Hoje" value={formatCurrency(stats.todayRevenue)} icon="ð" accent="yellow" />
-          <StatCard label="Receita Semana" value={formatCurrency(stats.weekRevenue)} icon="ð" accent="green" />
-          <StatCard label="Receita MÃªs" value={formatCurrency(stats.monthRevenue)} icon="ð°" accent="yellow" />
-          <StatCard label="Tours Hoje" value={stats.todayTours} icon="ðº" accent="ink" />
-          <StatCard label="Top Motorista" value={stats.topDriver.name} icon="ð¤" accent="copper" sublabel="esta semana" />
-          <StatCard label="Top TukTuk" value={stats.topTuktuk.nickname} icon="ð" accent="yellow" />
+          <StatCard label="Receita Hoje" value={formatCurrency(stats.todayRevenue)} icon="📊" accent="yellow" />
+          <StatCard label="Receita Semana" value={formatCurrency(stats.weekRevenue)} icon="📈" accent="green" />
+          <StatCard label="Receita Mês" value={formatCurrency(stats.monthRevenue)} icon="💰" accent="yellow" />
+          <StatCard label="Tours Hoje" value={stats.todayTours} icon="🛺" accent="ink" />
+          <StatCard label="Top Motorista" value={stats.topDriver.name} icon="👤" accent="copper" sublabel="esta semana" />
+          <StatCard label="Top TukTuk" value={stats.topTuktuk.nickname} icon="🏆" accent="yellow" />
         </div>
 
         {/* Drivers + Chart row */}
@@ -213,7 +213,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             {liveDrivers.length === 0 ? (
               <div className="px-5 py-8 text-center">
-                <p className="text-sm text-ink2">Convida motoristas na pÃ¡gina Motoristas.</p>
+                <p className="text-sm text-ink2">Convida motoristas na página Motoristas.</p>
               </div>
             ) : (
               <div className="divide-y divide-line">
@@ -224,7 +224,7 @@ export const DashboardPage: React.FC = () => {
                         {(d.full_name || 'M').charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-ink leading-none">{d.full_name || 'â'}</div>
+                        <div className="text-sm font-semibold text-ink leading-none">{d.full_name || '—'}</div>
                         {d.phone && <div className="text-xs text-ink2 mt-0.5">{d.phone}</div>}
                       </div>
                     </div>
@@ -238,7 +238,7 @@ export const DashboardPage: React.FC = () => {
           {/* Revenue Chart */}
           <div className="bg-card border border-line rounded-2xl shadow-card overflow-hidden">
             <div className="px-5 py-4 border-b border-line flex items-center justify-between">
-              <h2 className="text-sm font-bold text-ink">Receita â Ãºltimos 7 dias</h2>
+              <h2 className="text-sm font-bold text-ink">Receita — últimos 7 dias</h2>
               <span className="text-xs font-bold text-ink">{formatCurrency(stats.weekRevenue)}</span>
             </div>
             <div className="px-5 pb-5 pt-4">
