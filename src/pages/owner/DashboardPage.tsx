@@ -57,6 +57,11 @@ export const DashboardPage: React.FC = () => {
           .select('*')
           .eq('company_id', profile.company_id)
 
+        const { data: streetSales } = await supabase
+          .from('street_sales')
+          .select('*')
+          .eq('company_id', profile.company_id)
+
         const now = new Date()
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -82,13 +87,31 @@ export const DashboardPage: React.FC = () => {
           driverRevenue[p.received_by].amount += p.amount
         })
 
+        streetSales?.forEach((s) => {
+          const saleDate = new Date(s.sold_at)
+          const saleAmount = (s.price || 0) + (s.tip_amount || 0)
+          const day = saleDate.toISOString().split('T')[0]
+          if (!dailyRevenue[day]) dailyRevenue[day] = 0
+          dailyRevenue[day] += saleAmount
+          if (isTodayDate(saleDate)) todayRevenue += saleAmount
+          if (saleDate >= weekAgo) weekRevenue += saleAmount
+          if (saleDate >= monthStart) monthRevenue += saleAmount
+          if (!driverRevenue[s.driver_id]) {
+            driverRevenue[s.driver_id] = { name: s.driver_id, amount: 0 }
+          }
+          driverRevenue[s.driver_id].amount += saleAmount
+        })
+
         let topDriver = { name: '-', revenue: 0 }
         Object.values(driverRevenue).forEach((d) => {
           if (d.amount > topDriver.revenue) topDriver = { name: d.name, revenue: d.amount }
         })
 
-        const todayTours =
+        const todayBookings =
           bookings?.filter((b) => isTodayDate(b.start_at) && b.status !== 'cancelled').length || 0
+        const todayStreetSales =
+          streetSales?.filter((s) => isTodayDate(new Date(s.sold_at))).length || 0
+        const todayTours = todayBookings + todayStreetSales
 
         bookings?.forEach((b) => {
           const bookingPayments = payments?.filter((p) => p.booking_id === b.id) || []
@@ -160,7 +183,7 @@ export const DashboardPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-ink">Dashboard</h1>
-            <p className="text-sm text-ink2 mt-0.5">Visão geral do negócio</p>
+            <p className="text-sm text-ink2 mt-0.5">VisÃ£o geral do negÃ³cio</p>
           </div>
           <div className="text-xs text-ink2 bg-card border border-line px-3 py-1.5 rounded-lg shadow-card">
             {new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -169,12 +192,12 @@ export const DashboardPage: React.FC = () => {
 
         {/* KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <StatCard label="Receita Hoje" value={formatCurrency(stats.todayRevenue)} icon="📊" accent="yellow" />
-          <StatCard label="Receita Semana" value={formatCurrency(stats.weekRevenue)} icon="📈" accent="green" />
-          <StatCard label="Receita Mês" value={formatCurrency(stats.monthRevenue)} icon="💰" accent="yellow" />
-          <StatCard label="Tours Hoje" value={stats.todayTours} icon="🛺" accent="ink" />
-          <StatCard label="Top Motorista" value={stats.topDriver.name} icon="👤" accent="copper" sublabel="esta semana" />
-          <StatCard label="Top TukTuk" value={stats.topTuktuk.nickname} icon="🏆" accent="yellow" />
+          <StatCard label="Receita Hoje" value={formatCurrency(stats.todayRevenue)} icon="ð" accent="yellow" />
+          <StatCard label="Receita Semana" value={formatCurrency(stats.weekRevenue)} icon="ð" accent="green" />
+          <StatCard label="Receita MÃªs" value={formatCurrency(stats.monthRevenue)} icon="ð°" accent="yellow" />
+          <StatCard label="Tours Hoje" value={stats.todayTours} icon="ðº" accent="ink" />
+          <StatCard label="Top Motorista" value={stats.topDriver.name} icon="ð¤" accent="copper" sublabel="esta semana" />
+          <StatCard label="Top TukTuk" value={stats.topTuktuk.nickname} icon="ð" accent="yellow" />
         </div>
 
         {/* Drivers + Chart row */}
@@ -190,7 +213,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             {liveDrivers.length === 0 ? (
               <div className="px-5 py-8 text-center">
-                <p className="text-sm text-ink2">Convida motoristas na página Motoristas.</p>
+                <p className="text-sm text-ink2">Convida motoristas na pÃ¡gina Motoristas.</p>
               </div>
             ) : (
               <div className="divide-y divide-line">
@@ -201,7 +224,7 @@ export const DashboardPage: React.FC = () => {
                         {(d.full_name || 'M').charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-ink leading-none">{d.full_name || '—'}</div>
+                        <div className="text-sm font-semibold text-ink leading-none">{d.full_name || 'â'}</div>
                         {d.phone && <div className="text-xs text-ink2 mt-0.5">{d.phone}</div>}
                       </div>
                     </div>
@@ -215,7 +238,7 @@ export const DashboardPage: React.FC = () => {
           {/* Revenue Chart */}
           <div className="bg-card border border-line rounded-2xl shadow-card overflow-hidden">
             <div className="px-5 py-4 border-b border-line flex items-center justify-between">
-              <h2 className="text-sm font-bold text-ink">Receita — últimos 7 dias</h2>
+              <h2 className="text-sm font-bold text-ink">Receita â Ãºltimos 7 dias</h2>
               <span className="text-xs font-bold text-ink">{formatCurrency(stats.weekRevenue)}</span>
             </div>
             <div className="px-5 pb-5 pt-4">
