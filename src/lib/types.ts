@@ -1,3 +1,5 @@
+export type DriverStatus = 'available' | 'busy' | 'offline'
+
 export type Profile = {
   id: string
   company_id: string
@@ -5,6 +7,9 @@ export type Profile = {
   full_name: string
   phone: string
   commission_pct: number
+  status: DriverStatus
+  status_updated_at: string | null
+  is_super_admin: boolean
   created_at: string
 }
 
