@@ -50,15 +50,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (cancelled) return
-      if (session?.user) {
-        setUser({ id: session.user.id, email: session.user.email || '' })
-        const data = await fetchProfile(session.user.id)
-        if (!cancelled) setProfile(data || null)
-      } else {
+      // Only react to actual sign-in / sign-out. TOKEN_REFRESHED, USER_UPDATED
+      // and INITIAL_SESSION must NOT trigger a profile refetch — a transient
+      // network blip would null out the profile and bounce the user to /login.
+      if (event === 'SIGNED_OUT') {
         setUser(null)
         setProfile(null)
+        setLoading(false)
+        return
       }
-      if (!cancelled) setLoading(false)
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser({ id: session.user.id, email: session.user.email || '' })
+        const data = await fetchProfile(session.user.id)
+        if (!cancelled && data) setProfile(data)
+        if (!cancelled) setLoading(false)
+      }
     })
 
     return () => {
@@ -98,6 +104,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within AuthProvider')
+  if (!context) throw new Error('useAuth must be used dentro de AuthProvider')
   return context
 }
