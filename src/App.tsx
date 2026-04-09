@@ -41,48 +41,20 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 }
 
 const DriverRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, profile, loading, signOut } = useAuth()
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />
-  }
-
-  if (!profile) {
-    signOut().catch(() => {})
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>
-  }
-
-  if (profile.role !== 'driver') {
-    return <Navigate to="/dashboard" replace />
-  }
-
+  const { user, profile, loading } = useAuth()
+  if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>
+  if (!user) return <Navigate to="/login" replace />
+  if (!profile) return <div className="flex items-center justify-center h-screen">Carregando...</div>
+  if (profile.role !== 'driver') return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
 
 const OwnerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, profile, loading, signOut } = useAuth()
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />
-  }
-
-  if (!profile) {
-    signOut().catch(() => {})
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>
-  }
-
-  if (profile.role !== 'owner') {
-    return <Navigate to="/driver/today" replace />
-  }
-
+  const { user, profile, loading } = useAuth()
+  if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>
+  if (!user) return <Navigate to="/login" replace />
+  if (!profile) return <div className="flex items-center justify-center h-screen">Carregando...</div>
+  if (profile.role !== 'owner') return <Navigate to="/driver/today" replace />
   return <>{children}</>
 }
 
@@ -95,23 +67,11 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 }
 
 const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, profile, loading, signOut } = useAuth()
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>
-  }
-
-  // If we have a session but no profile after loading finished, the session is
-  // stale/broken — sign out so the user can try again instead of looping.
-  if (user && !profile) {
-    signOut().catch(() => {})
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>
-  }
-
+  const { user, profile, loading } = useAuth()
+  if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>
   if (user && profile) {
     return <Navigate to={profile.role === 'driver' ? '/driver/today' : '/dashboard'} replace />
   }
-
   return <>{children}</>
 }
 
