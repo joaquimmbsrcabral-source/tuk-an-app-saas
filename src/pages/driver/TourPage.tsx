@@ -21,6 +21,7 @@ export const TourPage: React.FC = () => {
     finalKm: 0,
     paymentMethod: 'cash',
     amount: 0,
+    tipAmount: 0,
     notes: '',
   })
 
@@ -66,13 +67,13 @@ export const TourPage: React.FC = () => {
   const handleEndTour = async () => {
     if (!id || !profile) return
     try {
-      // Update booking status
+      // Update booking status (tip is private to driver, not in payment)
       await supabase
         .from('bookings')
-        .update({ status: 'completed' })
+        .update({ status: 'completed', tip_amount: endForm.tipAmount })
         .eq('id', id)
 
-      // Record payment
+      // Record payment (tip is NOT included — 100% of tip stays with driver)
       await supabase
         .from('payments')
         .insert([
@@ -82,7 +83,7 @@ export const TourPage: React.FC = () => {
             method: endForm.paymentMethod,
             amount: endForm.amount,
             received_at: new Date().toISOString(),
-            received_by: profile.full_name,
+            received_by: profile.id,
             notes: endForm.notes,
           },
         ])
@@ -172,6 +173,14 @@ export const TourPage: React.FC = () => {
             value={endForm.amount}
             onChange={(e) => setEndForm({ ...endForm, amount: parseFloat(e.target.value) || 0 })}
             step="0.01"
+          />
+          <Input
+            label="Gorjeta (€) — só tu vês 💰"
+            type="number"
+            value={endForm.tipAmount}
+            onChange={(e) => setEndForm({ ...endForm, tipAmount: parseFloat(e.target.value) || 0 })}
+            step="0.5"
+            placeholder="0"
           />
           <Select
             label="Método de Pagamento"
