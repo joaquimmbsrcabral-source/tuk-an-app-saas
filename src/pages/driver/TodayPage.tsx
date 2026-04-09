@@ -6,15 +6,39 @@ import { DriverLayout } from '../../components/DriverLayout'
 import { Card } from '../../components/Card'
 import { Button } from '../../components/Button'
 import { EmptyState } from '../../components/EmptyState'
-import { Booking, Shift } from '../../lib/types'
+import { Booking, Shift, DriverStatus } from '../../lib/types'
 import { formatTime, isTodayDate } from '../../lib/format'
 import { Play } from 'lucide-react'
+import { StatusBadge } from '../../components/StatusBadge'
 
 export const TodayPage: React.FC = () => {
   const { user, profile } = useAuth()
   const [shift, setShift] = useState<Shift | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState<DriverStatus>(profile?.status || 'offline')
+  const [statusSaving, setStatusSaving] = useState(false)
+
+  useEffect(() => {
+    if (profile?.status) setStatus(profile.status)
+  }, [profile?.status])
+
+  const updateStatus = async (next: DriverStatus) => {
+    if (!profile) return
+    setStatusSaving(true)
+    const prev = status
+    setStatus(next)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: next, status_updated_at: new Date().toISOString() })
+      .eq('id', profile.id)
+    if (error) {
+      console.error(error)
+      setStatus(prev)
+      alert('Não foi possível atualizar o estado.')
+    }
+    setStatusSaving(false)
+  }
 
   useEffect(() => {
     if (user && profile) {
@@ -60,6 +84,42 @@ export const TodayPage: React.FC = () => {
     <DriverLayout>
       <div className="space-y-4 p-4">
         <h1 className="text-2xl font-bold text-ink">Olá, {profile?.full_name?.split(' ')[0]}!</h1>
+
+        <Card className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-ink">O meu estado</span>
+            <StatusBadge status={status} />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              variant={status === 'available' ? 'primary' : 'secondary'}
+              onClick={() => updateStatus('available')}
+              disabled={statusSaving}
+              className="text-xs"
+            >
+              Disponível
+            </Button>
+            <Button
+              variant={status === 'busy' ? 'primary' : 'secondary'}
+              onClick={() => updateStatus('busy')}
+              disabled={statusSaving}
+              className="text-xs"
+            >
+              Ocupado
+            </Button>
+            <Button
+              variant={status === 'offline' ? 'primary' : 'secondary'}
+              onClick={() => updateStatus('offline')}
+              disabled={statusSaving}
+              className="text-xs"
+            >
+              Offline
+            </Button>
+          </div>
+          <p className="text-xs text-ink2">
+            Marca <strong>Ocupado</strong> quando começas um tour e <strong>Disponível</strong> quando acabas. O owner vê em tempo real.
+          </p>
+        </Card>
 
         {shift && (
           <Card className="bg-yellow bg-opacity-10 border-yellow">
