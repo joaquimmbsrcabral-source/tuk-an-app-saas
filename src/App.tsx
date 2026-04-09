@@ -14,6 +14,7 @@ import { BookingsPage } from './pages/owner/BookingsPage'
 import { DriversPage } from './pages/owner/DriversPage'
 import { FinancePage } from './pages/owner/FinancePage'
 import { SettingsPage } from './pages/owner/SettingsPage'
+import { AdminPage } from './pages/admin/AdminPage'
 
 // Driver Pages
 import { TodayPage } from './pages/driver/TodayPage'
@@ -85,6 +86,14 @@ const OwnerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>
 }
 
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, profile, loading } = useAuth()
+  if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>
+  if (!user || !profile) return <Navigate to="/login" replace />
+  if (!profile.is_super_admin) return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
 const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, profile, loading, signOut } = useAuth()
 
@@ -123,6 +132,7 @@ export default function App() {
           <Route path="/motoristas" element={<OwnerRoute><DriversPage /></OwnerRoute>} />
           <Route path="/financas" element={<OwnerRoute><FinancePage /></OwnerRoute>} />
           <Route path="/definicoes" element={<OwnerRoute><SettingsPage /></OwnerRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
           {/* Driver Routes */}
           <Route path="/driver/today" element={<DriverRoute><TodayPage /></DriverRoute>} />
