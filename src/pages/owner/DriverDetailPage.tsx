@@ -18,7 +18,7 @@ export const DriverDetailPage: React.FC = () => {
   const [stats, setStats] = useState({
     weekCount: 0, weekGross: 0, weekCommission: 0,
     monthCount: 0, monthGross: 0, monthCommission: 0,
-    allCount: 0, allGross: 0, allCommission: 0,
+    allCount: 0, allGross: 0, allCommission: 0, activeDays: 0, avgPerDay: 0, avgPerTour: 0,
     recent: [] as any[],
   })
 
@@ -63,6 +63,9 @@ export const DriverDetailPage: React.FC = () => {
         weekCount: week.length, weekGross: sum(week), weekCommission: sum(week) * pct,
         monthCount: month.length, monthGross: sum(month), monthCommission: sum(month) * pct,
         allCount: all.length, allGross: sum(all), allCommission: sum(all) * pct,
+        activeDays: new Set(all.map((x: any) => (x.date || '').slice(0,10)).filter(Boolean)).size,
+        avgPerDay: (() => { const d = new Set(all.map((x: any) => (x.date || '').slice(0,10)).filter(Boolean)).size; return d ? sum(all) / d : 0 })(),
+        avgPerTour: all.length ? sum(all) / all.length : 0,
         recent: all.slice(0, 20),
       })
     } catch (err) {
@@ -87,7 +90,7 @@ export const DriverDetailPage: React.FC = () => {
           </div>
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-ink">{driver.full_name}</h1>
-            <p className="text-ink2">{driver.phone} · Comissão {driver.commission_pct}% · <span className={driver.status === 'available' ? 'text-green' : 'text-ink2'}>{driver.status || 'offline'}</span></p>
+            <p className="text-ink2">{driver.phone} Â· ComissÃ£o {driver.commission_pct}% Â· <span className={driver.status === 'available' ? 'text-green' : 'text-ink2'}>{driver.status || 'offline'}</span></p>
           </div>
         </div>
 
@@ -96,24 +99,40 @@ export const DriverDetailPage: React.FC = () => {
             <div className="flex items-center gap-2 mb-2"><TrendingUp size={18} className="text-green" /><h3 className="font-bold text-ink">Esta semana</h3></div>
             <div className="text-2xl font-bold text-ink">{stats.weekCount} tours</div>
             <div className="text-sm text-ink2">Bruto: {formatCurrency(stats.weekGross)}</div>
-            <div className="text-sm font-semibold text-green">Comissão: {formatCurrency(stats.weekCommission)}</div>
+            <div className="text-sm font-semibold text-green">ComissÃ£o: {formatCurrency(stats.weekCommission)}</div>
           </Card>
           <Card className="bg-yellow bg-opacity-5 border-yellow border-opacity-30">
-            <div className="flex items-center gap-2 mb-2"><Calendar size={18} className="text-copper" /><h3 className="font-bold text-ink">Este mês</h3></div>
+            <div className="flex items-center gap-2 mb-2"><Calendar size={18} className="text-copper" /><h3 className="font-bold text-ink">Este mÃªs</h3></div>
             <div className="text-2xl font-bold text-ink">{stats.monthCount} tours</div>
             <div className="text-sm text-ink2">Bruto: {formatCurrency(stats.monthGross)}</div>
-            <div className="text-sm font-semibold text-copper">Comissão: {formatCurrency(stats.monthCommission)}</div>
+            <div className="text-sm font-semibold text-copper">ComissÃ£o: {formatCurrency(stats.monthCommission)}</div>
           </Card>
           <Card>
-            <div className="flex items-center gap-2 mb-2"><DollarSign size={18} className="text-ink2" /><h3 className="font-bold text-ink">Total histórico</h3></div>
+            <div className="flex items-center gap-2 mb-2"><DollarSign size={18} className="text-ink2" /><h3 className="font-bold text-ink">Total histÃ³rico</h3></div>
             <div className="text-2xl font-bold text-ink">{stats.allCount} tours</div>
             <div className="text-sm text-ink2">Bruto: {formatCurrency(stats.allGross)}</div>
-            <div className="text-sm font-semibold text-ink">Comissão: {formatCurrency(stats.allCommission)}</div>
+            <div className="text-sm font-semibold text-ink">ComissÃ£o: {formatCurrency(stats.allCommission)}</div>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <div className="text-sm text-ink2 mb-1">MÃ©dia de faturaÃ§Ã£o por dia</div>
+            <div className="text-2xl font-bold text-ink">{formatCurrency(stats.avgPerDay)}</div>
+            <div className="text-xs text-ink2 mt-1">{stats.activeDays} {stats.activeDays === 1 ? 'dia ativo' : 'dias ativos'}</div>
+          </Card>
+          <Card>
+            <div className="text-sm text-ink2 mb-1">MÃ©dia por tour</div>
+            <div className="text-2xl font-bold text-ink">{formatCurrency(stats.avgPerTour)}</div>
+          </Card>
+          <Card>
+            <div className="text-sm text-ink2 mb-1">Tours por dia ativo</div>
+            <div className="text-2xl font-bold text-ink">{stats.activeDays ? (stats.allCount / stats.activeDays).toFixed(1) : '0'}</div>
           </Card>
         </div>
 
         <Card>
-          <h2 className="text-lg font-bold text-ink mb-4">Últimas atividades</h2>
+          <h2 className="text-lg font-bold text-ink mb-4">Ãltimas atividades</h2>
           {stats.recent.length === 0 ? (
             <p className="text-sm text-ink2 text-center py-4">Sem atividade ainda.</p>
           ) : (
@@ -121,7 +140,7 @@ export const DriverDetailPage: React.FC = () => {
               {stats.recent.map((r) => (
                 <div key={`${r.kind}-${r.id}`} className="flex items-center justify-between p-3 border border-line rounded-btn">
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{r.kind === 'street' ? '🏍️' : '📅'}</span>
+                    <span className="text-xl">{r.kind === 'street' ? 'ðï¸' : 'ð'}</span>
                     <div>
                       <div className="font-semibold text-ink text-sm">{r.name}</div>
                       <div className="text-xs text-ink2">{format(new Date(r.date), "d 'de' MMMM", { locale: pt })}</div>
