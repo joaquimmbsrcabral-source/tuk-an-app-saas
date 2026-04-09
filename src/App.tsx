@@ -14,6 +14,7 @@ import { BookingsPage } from './pages/owner/BookingsPage'
 import { DriversPage } from './pages/owner/DriversPage'
 import { FinancePage } from './pages/owner/FinancePage'
 import { SettingsPage } from './pages/owner/SettingsPage'
+import { OwnerSchedulePage } from './pages/owner/SchedulePage'
 import { AdminPage } from './pages/admin/AdminPage'
 
 // Driver Pages
@@ -21,6 +22,9 @@ import { TodayPage } from './pages/driver/TodayPage'
 import { TourPage } from './pages/driver/TourPage'
 import { HistoryPage } from './pages/driver/HistoryPage'
 import { ProfilePage } from './pages/driver/ProfilePage'
+import { StreetSalePage } from './pages/driver/StreetSalePage'
+import { DriverFinancePage } from './pages/driver/FinancePage'
+import { DriverSchedulePage } from './pages/driver/SchedulePage'
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, profile, loading } = useAuth()
@@ -92,11 +96,15 @@ export default function App() {
           <Route path="/motoristas" element={<OwnerRoute><DriversPage /></OwnerRoute>} />
           <Route path="/financas" element={<OwnerRoute><FinancePage /></OwnerRoute>} />
           <Route path="/definicoes" element={<OwnerRoute><SettingsPage /></OwnerRoute>} />
+          <Route path="/escala" element={<OwnerRoute><OwnerSchedulePage /></OwnerRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
           {/* Driver Routes */}
           <Route path="/driver/today" element={<DriverRoute><TodayPage /></DriverRoute>} />
           <Route path="/driver/tour/:id" element={<DriverRoute><TourPage /></DriverRoute>} />
+          <Route path="/driver/street-sale" element={<DriverRoute><StreetSalePage /></DriverRoute>} />
+          <Route path="/driver/finance" element={<DriverRoute><DriverFinancePage /></DriverRoute>} />
+          <Route path="/driver/schedule" element={<DriverRoute><DriverSchedulePage /></DriverRoute>} />
           <Route path="/driver/history" element={<DriverRoute><HistoryPage /></DriverRoute>} />
           <Route path="/driver/profile" element={<DriverRoute><ProfilePage /></DriverRoute>} />
 
