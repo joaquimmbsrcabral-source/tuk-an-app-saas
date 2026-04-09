@@ -8,26 +8,34 @@ import { Input, Select, TextArea } from '../../components/Input'
 import { Modal } from '../../components/Modal'
 import { Profile, TukTuk, Shift } from '../../lib/types'
 import {
+  startOfMonth,
+  endOfMonth,
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
   format,
-  addWeeks,
-  subWeeks,
+  addMonths,
+  subMonths,
   parseISO,
   isSameDay,
+  isSameMonth,
+  isToday,
 } from 'date-fns'
 import { pt as ptPT } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Trash2, CalendarDays } from 'lucide-react'
+
+const DAY_HEADERS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 export const OwnerSchedulePage: React.FC = () => {
   const { profile } = useAuth()
   const [drivers, setDrivers] = useState<Profile[]>([])
   const [tuktuks, setTuktuks] = useState<TukTuk[]>([])
   const [shifts, setShifts] = useState<Shift[]>([])
-  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }))
+  const [month, setMonth] = useState(new Date())
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [form, setForm] = useState({
     driver_id: '',
     tuktuk_id: '',
@@ -39,13 +47,13 @@ export const OwnerSchedulePage: React.FC = () => {
 
   useEffect(() => {
     if (profile) load()
-  }, [profile, weekStart])
+  }, [profile, month])
 
   const load = async () => {
     if (!profile) return
     setLoading(true)
-    const start = format(weekStart, 'yyyy-MM-dd')
-    const end = format(endOfWeek(weekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd')
+    const start = format(startOfMonth(month), 'yyyy-MM-dd')
+    const end = format(endOfMonth(month), 'yyyy-MM-dd')
 
     const [{ data: ds }, { data: tts }, { data: ss }] = await Promise.all([
       supabase.from('profiles').select('*').eq('company_id', profile.company_id).eq('role', 'driver'),
@@ -64,12 +72,17 @@ export const OwnerSchedulePage: React.FC = () => {
     setLoading(false)
   }
 
-  const days = eachDayOfInterval({
-    start: weekStart,
-    end: endOfWeek(weekStart, { weekStartsOn: 1 }),
+  // Build calendar grid — full weeks covering the month
+  const calendarDays = eachDayOfInterval({
+    start: startOfWeek(startOfMonth(month), { weekStartsOn: 1 }),
+    end: endOfWeek(endOfMonth(month), { weekStartsOn: 1 }),
   })
 
+  const shiftsForDay = (d: Date) =>
+    shifts.filter((s) => isSameDay(parseISO(s.shift_date), d))
+
   const openNew = (date: Date) => {
+    setSelectedDay(date)
     setForm({
       driver_id: drivers[0]?.id || '',
       tuktuk_id: tuktuks[0]?.id || '',
@@ -86,6 +99,7 @@ export const OwnerSchedulePage: React.FC = () => {
       alert('Escolhe motorista e data.')
       return
     }
+    setSaving(true)
     const start_at = `${form.shift_date}T${form.start_time}:00`
     const end_at = `${form.shift_date}T${form.end_time}:00`
     const { error } = await supabase.from('shifts').insert([
@@ -99,6 +113,7 @@ export const OwnerSchedulePage: React.FC = () => {
         notes: form.notes || null,
       },
     ])
+    setSaving(false)
     if (error) {
       alert('Erro: ' + error.message)
       return
@@ -114,7 +129,7 @@ export const OwnerSchedulePage: React.FC = () => {
   }
 
   const driverName = (id: string) => drivers.find((d) => d.id === id)?.full_name || '?'
-  const tuktukName = (id: string | null) => {
+  const tuktukLabel = (id: string | null) => {
     if (!id) return null
     const t = tuktuks.find((x) => x.id === id)
     return t?.nickname || t?.plate || null
@@ -122,87 +137,177 @@ export const OwnerSchedulePage: React.FC = () => {
 
   return (
     <OwnerLayout>
-      <div className="space-y-4">
+      <div className="space-y-5">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-ink">Escala Semanal</h1>
+          <div>
+            <h1 className="text-2xl font-black text-ink">Escala Mensal</h1>
+            <p className="text-sm text-ink2 mt-0.5">Gerir turnos e atribuições de motoristas</p>
+          </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setWeekStart(subWeeks(weekStart, 1))} className="p-2 border border-line rounded-btn">
-              <ChevronLeft size={18} />
+            <button
+              onClick={() => setMonth(subMonths(month, 1))}
+              className="w-9 h-9 flex items-center justify-center border border-line rounded-xl bg-card shadow-card hover:shadow-card-md transition-shadow text-ink2 hover:text-ink"
+            >
+              <ChevronLeft size={16} />
             </button>
-            <span className="text-sm font-bold text-ink min-w-[180px] text-center capitalize">
-              {format(weekStart, "dd 'de' MMM", { locale: ptPT })} —{' '}
-              {format(endOfWeek(weekStart, { weekStartsOn: 1 }), "dd 'de' MMM", { locale: ptPT })}
-            </span>
-            <button onClick={() => setWeekStart(addWeeks(weekStart, 1))} className="p-2 border border-line rounded-btn">
-              <ChevronRight size={18} />
+            <div className="text-center min-w-[160px]">
+              <span className="text-base font-bold text-ink capitalize">
+                {format(month, 'MMMM yyyy', { locale: ptPT })}
+              </span>
+            </div>
+            <button
+              onClick={() => setMonth(addMonths(month, 1))}
+              className="w-9 h-9 flex items-center justify-center border border-line rounded-xl bg-card shadow-card hover:shadow-card-md transition-shadow text-ink2 hover:text-ink"
+            >
+              <ChevronRight size={16} />
             </button>
             <button
-              onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-              className="px-3 py-2 text-sm border border-line rounded-btn"
+              onClick={() => setMonth(new Date())}
+              className="px-3 py-2 text-xs font-bold border border-line rounded-xl bg-card shadow-card hover:shadow-card-md transition-shadow text-ink2 hover:text-ink"
             >
               Hoje
             </button>
           </div>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12 text-ink2">A carregar…</div>
-        ) : drivers.length === 0 ? (
+        {/* No drivers state */}
+        {!loading && drivers.length === 0 ? (
           <Card>
-            <p className="text-sm text-ink2">Convida motoristas primeiro para os escalares.</p>
+            <div className="flex flex-col items-center py-10 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-cream border border-line flex items-center justify-center text-3xl mb-4 shadow-card">
+                👤
+              </div>
+              <h3 className="font-bold text-ink mb-1">Sem motoristas ainda</h3>
+              <p className="text-sm text-ink2 max-w-xs">Convida motoristas primeiro na página Motoristas para os poderes escalar.</p>
+            </div>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
-            {days.map((d) => {
-              const dayShifts = shifts.filter((s) => isSameDay(parseISO(s.shift_date), d))
-              const isToday = isSameDay(d, new Date())
-              return (
-                <Card key={d.toISOString()} className={`min-h-[180px] ${isToday ? 'ring-2 ring-yellow' : ''}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <p className="text-xs text-ink2 uppercase">{format(d, 'EEE', { locale: ptPT })}</p>
-                      <p className="text-lg font-bold text-ink">{format(d, 'dd')}</p>
-                    </div>
-                    <button
-                      onClick={() => openNew(d)}
-                      className="bg-ink text-yellow rounded-full p-1 hover:translate-y-[-1px]"
-                      title="Adicionar turno"
+          <Card noPadding className="overflow-hidden">
+            {/* Day headers */}
+            <div className="grid grid-cols-7 border-b border-line">
+              {DAY_HEADERS.map((d) => (
+                <div key={d} className="py-2.5 text-center text-xs font-bold text-ink2 uppercase tracking-wider">
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar grid */}
+            {loading ? (
+              <div className="grid grid-cols-7">
+                {[...Array(35)].map((_, i) => (
+                  <div key={i} className="min-h-[100px] border-r border-b border-line last:border-r-0 p-2">
+                    <div className="skeleton h-4 w-6 mb-2 rounded" />
+                    <div className="skeleton h-8 w-full rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-7">
+                {calendarDays.map((d, idx) => {
+                  const dayShifts = shiftsForDay(d)
+                  const inCurrentMonth = isSameMonth(d, month)
+                  const todayDay = isToday(d)
+                  const isLastInRow = (idx + 1) % 7 === 0
+                  const isLastRow = idx >= calendarDays.length - 7
+
+                  return (
+                    <div
+                      key={d.toISOString()}
+                      className={`min-h-[110px] border-b border-r border-line relative group transition-colors ${
+                        isLastInRow ? 'border-r-0' : ''
+                      } ${isLastRow ? 'border-b-0' : ''} ${
+                        inCurrentMonth ? 'bg-card' : 'bg-cream bg-opacity-60'
+                      } ${todayDay ? 'bg-yellow bg-opacity-5' : ''}`}
                     >
-                      <Plus size={14} />
-                    </button>
-                  </div>
-                  <div className="space-y-1">
-                    {dayShifts.length === 0 ? (
-                      <p className="text-xs text-ink2">—</p>
-                    ) : (
-                      dayShifts.map((s) => (
-                        <div key={s.id} className="bg-yellow bg-opacity-30 rounded p-2 text-xs group relative">
-                          <p className="font-bold text-ink">{driverName(s.driver_id)}</p>
-                          {s.start_at && s.end_at && (
-                            <p className="text-ink2">
-                              {format(parseISO(s.start_at), 'HH:mm')}-{format(parseISO(s.end_at), 'HH:mm')}
-                            </p>
-                          )}
-                          {tuktukName(s.tuktuk_id) && <p className="text-ink2">🛺 {tuktukName(s.tuktuk_id)}</p>}
+                      {/* Day number */}
+                      <div className="flex items-center justify-between px-2 pt-2 pb-1">
+                        <span
+                          className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${
+                            todayDay
+                              ? 'bg-ink text-yellow'
+                              : inCurrentMonth
+                              ? 'text-ink'
+                              : 'text-muted'
+                          }`}
+                        >
+                          {format(d, 'd')}
+                        </span>
+                        {inCurrentMonth && (
                           <button
-                            onClick={() => handleDelete(s.id)}
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-copper"
+                            onClick={() => openNew(d)}
+                            className="w-5 h-5 rounded-full bg-ink text-yellow flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all"
+                            title="Adicionar turno"
                           >
-                            <Trash2 size={12} />
+                            <Plus size={10} />
                           </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </Card>
-              )
-            })}
+                        )}
+                      </div>
+
+                      {/* Shifts */}
+                      <div className="px-1.5 pb-1.5 space-y-1 overflow-hidden">
+                        {dayShifts.slice(0, 3).map((s) => (
+                          <div
+                            key={s.id}
+                            className="relative group/shift bg-yellow bg-opacity-25 border border-yellow border-opacity-40 rounded-md px-1.5 py-1 text-[10px] leading-tight"
+                          >
+                            <p className="font-bold text-ink truncate">{driverName(s.driver_id)}</p>
+                            {s.start_at && s.end_at && (
+                              <p className="text-ink2">
+                                {format(parseISO(s.start_at), 'HH:mm')}–{format(parseISO(s.end_at), 'HH:mm')}
+                              </p>
+                            )}
+                            {tuktukLabel(s.tuktuk_id) && (
+                              <p className="text-ink2">🛺 {tuktukLabel(s.tuktuk_id)}</p>
+                            )}
+                            <button
+                              onClick={() => handleDelete(s.id)}
+                              className="absolute top-0.5 right-0.5 opacity-0 group-hover/shift:opacity-100 text-copper hover:scale-110 transition-all"
+                              title="Apagar turno"
+                            >
+                              <Trash2 size={10} />
+                            </button>
+                          </div>
+                        ))}
+                        {dayShifts.length > 3 && (
+                          <p className="text-[10px] text-ink2 font-medium px-1">
+                            +{dayShifts.length - 3} mais
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Monthly summary */}
+        {!loading && shifts.length > 0 && (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-card border border-line rounded-xl p-4 shadow-card text-center">
+              <p className="text-2xl font-black text-ink">{shifts.length}</p>
+              <p className="text-xs text-ink2 mt-0.5">turnos este mês</p>
+            </div>
+            <div className="bg-card border border-line rounded-xl p-4 shadow-card text-center">
+              <p className="text-2xl font-black text-ink">{new Set(shifts.map((s) => s.driver_id)).size}</p>
+              <p className="text-xs text-ink2 mt-0.5">motoristas escalados</p>
+            </div>
+            <div className="bg-card border border-line rounded-xl p-4 shadow-card text-center">
+              <p className="text-2xl font-black text-ink">
+                {new Set(shifts.map((s) => s.shift_date)).size}
+              </p>
+              <p className="text-xs text-ink2 mt-0.5">dias com turnos</p>
+            </div>
           </div>
         )}
       </div>
 
+      {/* Modal — Novo Turno */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Novo Turno">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Select
             label="Motorista"
             options={drivers.map((d) => ({ value: d.id, label: d.full_name }))}
@@ -211,7 +316,7 @@ export const OwnerSchedulePage: React.FC = () => {
           />
           <Select
             label="TukTuk (opcional)"
-            options={tuktuks.map((t) => ({ value: t.id, label: t.nickname || t.plate }))}
+            options={[{ value: '', label: '— Nenhum —' }, ...tuktuks.map((t) => ({ value: t.id, label: t.nickname || t.plate }))]}
             value={form.tuktuk_id}
             onChange={(e) => setForm({ ...form, tuktuk_id: e.target.value })}
           />
@@ -240,9 +345,9 @@ export const OwnerSchedulePage: React.FC = () => {
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
           />
-          <div className="flex gap-2 pt-2">
-            <Button onClick={handleSave} variant="primary" className="flex-1">
-              Guardar
+          <div className="flex gap-2 pt-1">
+            <Button onClick={handleSave} variant="primary" className="flex-1" loading={saving}>
+              Guardar Turno
             </Button>
             <Button onClick={() => setModalOpen(false)} variant="ghost" className="flex-1">
               Cancelar
