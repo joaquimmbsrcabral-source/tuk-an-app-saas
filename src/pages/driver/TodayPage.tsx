@@ -7,66 +7,51 @@ import { Card } from '../../components/Card'
 import { Button } from '../../components/Button'
 import { EmptyState } from '../../components/EmptyState'
 import { Booking, Shift, DriverStatus } from '../../lib/types'
-import { formatTime, isTodayDate } from '../../lib/format'
-import { Play } from 'lucide-react'
+import { formatTime } from '../../lib/format'
+import { Play, Plus } from 'lucide-react'
 import { StatusBadge } from '../../components/StatusBadge'
 
 export const TodayPage: React.FC = () => {
-  const { user, profile } = useAuth()
+  const { user, profile, updateMyStatus } = useAuth()
   const [shift, setShift] = useState<Shift | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState<DriverStatus>(profile?.status || 'offline')
   const [statusSaving, setStatusSaving] = useState(false)
 
-  useEffect(() => {
-    if (profile?.status) setStatus(profile.status)
-  }, [profile?.status])
+  const status: DriverStatus = profile?.status || 'offline'
 
-  const updateStatus = async (next: DriverStatus) => {
-    if (!profile) return
+  const handleStatus = async (next: DriverStatus) => {
     setStatusSaving(true)
-    const prev = status
-    setStatus(next)
-    const { error } = await supabase
-      .from('profiles')
-      .update({ status: next, status_updated_at: new Date().toISOString() })
-      .eq('id', profile.id)
-    if (error) {
-      console.error(error)
-      setStatus(prev)
+    try {
+      await updateMyStatus(next)
+    } catch (err) {
       alert('Não foi possível atualizar o estado.')
+    } finally {
+      setStatusSaving(false)
     }
-    setStatusSaving(false)
   }
 
   useEffect(() => {
-    if (user && profile) {
-      fetchTodayData()
-    }
+    if (user && profile) fetchTodayData()
   }, [user, profile])
 
   const fetchTodayData = async () => {
     if (!profile) return
-
     try {
-      // Get today's shift
+      const today = new Date().toISOString().split('T')[0]
+
       const { data: shifts } = await supabase
         .from('shifts')
         .select('*')
         .eq('driver_id', profile.id)
-        .eq('shift_date', new Date().toISOString().split('T')[0])
+        .eq('shift_date', today)
+      if (shifts && shifts.length > 0) setShift(shifts[0])
 
-      if (shifts && shifts.length > 0) {
-        setShift(shifts[0])
-      }
-
-      // Get today's bookings
       const { data: bkgs } = await supabase
         .from('bookings')
         .select('*')
         .eq('driver_id', profile.id)
-        .gte('start_at', new Date().toISOString().split('T')[0])
+        .gte('start_at', today)
         .lt('start_at', new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0])
         .neq('status', 'cancelled')
 
@@ -93,7 +78,7 @@ export const TodayPage: React.FC = () => {
           <div className="grid grid-cols-3 gap-2">
             <Button
               variant={status === 'available' ? 'primary' : 'secondary'}
-              onClick={() => updateStatus('available')}
+              onClick={() => handleStatus('available')}
               disabled={statusSaving}
               className="text-xs"
             >
@@ -101,7 +86,7 @@ export const TodayPage: React.FC = () => {
             </Button>
             <Button
               variant={status === 'busy' ? 'primary' : 'secondary'}
-              onClick={() => updateStatus('busy')}
+              onClick={() => handleStatus('busy')}
               disabled={statusSaving}
               className="text-xs"
             >
@@ -109,7 +94,7 @@ export const TodayPage: React.FC = () => {
             </Button>
             <Button
               variant={status === 'offline' ? 'primary' : 'secondary'}
-              onClick={() => updateStatus('offline')}
+              onClick={() => handleStatus('offline')}
               disabled={statusSaving}
               className="text-xs"
             >
@@ -121,25 +106,39 @@ export const TodayPage: React.FC = () => {
           </p>
         </Card>
 
+        <Link to="/driver/street-sale" className="block">
+          <Card className="bg-yellow border-yellow flex items-center justify-between hover:translate-y-[-2px] transition-transform cursor-pointer">
+            <div>
+              <h2 className="text-lg font-bold text-ink">Vendi na rua</h2>
+              <p className="text-xs text-ink2">Regista uma venda direta de tour</p>
+            </div>
+            <div className="bg-ink text-yellow rounded-full p-3">
+              <Plus size={24} />
+            </div>
+          </Card>
+        </Link>
+
         {shift && (
-          <Card className="bg-yellow bg-opacity-10 border-yellow">
+          <Card className="bg-cream border-line">
             <h2 className="text-lg font-bold text-ink mb-2">Turno de Hoje</h2>
-            <p className="text-sm text-ink2 mb-1">
-              {formatTime(shift.start_at)} - {formatTime(shift.end_at)}
-            </p>
-            <p className="text-sm text-ink2">ID do Tuktuk: {shift.tuktuk_id}</p>
+            {shift.start_at && shift.end_at && (
+              <p className="text-sm text-ink2 mb-1">
+                {formatTime(shift.start_at)} - {formatTime(shift.end_at)}
+              </p>
+            )}
+            {shift.notes && <p className="text-xs text-ink2">{shift.notes}</p>}
           </Card>
         )}
 
         {bookings.length === 0 ? (
           <EmptyState
             icon="🛺"
-            title="Sem Tours Hoje"
-            description="Você não tem nenhum tour agendado para hoje"
+            title="Sem reservas hoje"
+            description="Não tens nenhum tour reservado para hoje. Boa sorte com as vendas de rua!"
           />
         ) : (
           <div className="space-y-3">
-            <h2 className="text-lg font-bold text-ink">Tours Hoje ({bookings.length})</h2>
+            <h2 className="text-lg font-bold text-ink">Reservas Hoje ({bookings.length})</h2>
             {bookings.map((booking) => (
               <Card key={booking.id} className="flex flex-col gap-3">
                 <div>
