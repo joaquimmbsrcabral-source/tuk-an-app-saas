@@ -103,8 +103,8 @@ export const FleetPage: React.FC = () => {
   return (
     <OwnerLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-ink">Frota</h1>
+        <div className="flex flex-wrap items-center gap-3 justify-between">
+          <h1 className="text-xl sm:text-3xl font-bold text-ink">Frota</h1>
           <Button onClick={openNewModal} variant="primary">
             <Plus size={20} className="mr-2" />
             Novo TukTuk
