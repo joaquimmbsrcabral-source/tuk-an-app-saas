@@ -147,8 +147,8 @@ export const BookingsPage: React.FC = () => {
   return (
     <OwnerLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-ink">Reservas</h1>
+        <div className="flex flex-wrap items-center gap-3 justify-between">
+          <h1 className="text-xl sm:text-3xl font-bold text-ink">Reservas</h1>
           <Button onClick={() => setIsModalOpen(true)} variant="primary">
             <Plus size={20} className="mr-2" />
             Nova Reserva
