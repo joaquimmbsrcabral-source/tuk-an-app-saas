@@ -87,8 +87,8 @@ export const DriversPage: React.FC = () => {
   return (
     <OwnerLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-ink">Motoristas</h1>
+        <div className="flex flex-wrap items-center gap-3 justify-between">
+          <h1 className="text-xl sm:text-3xl font-bold text-ink">Motoristas</h1>
           <Button onClick={() => setIsModalOpen(true)} variant="primary">
             <Plus size={20} className="mr-2" />
             Convidar Motorista
@@ -122,7 +122,7 @@ export const DriversPage: React.FC = () => {
                         const pct = parseFloat(e.target.value) || 0
                         await supabase.from('profiles').update({ commission_pct: pct }).eq('id', driver.id)
                       }}
-                      className="w-20 px-2 py-1 text-sm border-line rounded-btn"
+                      className="w-20 px-2 py-2 text-sm border border-line rounded-btn min-h-[44px]"
                     />
                   </div>
                 </div>
