@@ -19,7 +19,7 @@ import {
   parseISO,
 } from 'date-fns'
 import { pt as ptPT } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Clock, Truck } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const DAY_LABELS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
 
@@ -38,6 +38,7 @@ export const DriverSchedulePage: React.FC = () => {
   const load = async () => {
     if (!profile) return
     setLoading(true)
+
     const start = format(startOfMonth(month), 'yyyy-MM-dd')
     const end = format(endOfMonth(month), 'yyyy-MM-dd')
 
@@ -51,14 +52,16 @@ export const DriverSchedulePage: React.FC = () => {
         .order('shift_date'),
       supabase.from('tuktuks').select('*').eq('company_id', profile.company_id),
     ])
+
     setShifts(ss || [])
+
     const map: Record<string, TukTuk> = {}
     ;(tts || []).forEach((t) => (map[t.id] = t))
     setTuktuks(map)
+
     setLoading(false)
   }
 
-  // Calendar grid: full weeks covering the month
   const calendarDays = eachDayOfInterval({
     start: startOfWeek(startOfMonth(month), { weekStartsOn: 1 }),
     end: endOfWeek(endOfMonth(month), { weekStartsOn: 1 }),
@@ -67,7 +70,6 @@ export const DriverSchedulePage: React.FC = () => {
   const shiftsForDay = (d: Date) =>
     shifts.filter((s) => isSameDay(parseISO(s.shift_date), d))
 
-  // Selected day's shifts
   const selectedShifts = selectedDay ? shiftsForDay(selectedDay) : null
 
   return (
@@ -89,9 +91,11 @@ export const DriverSchedulePage: React.FC = () => {
             >
               <ChevronLeft size={18} />
             </button>
+
             <h2 className="text-base font-bold text-ink capitalize">
               {format(month, 'MMMM yyyy', { locale: ptPT })}
             </h2>
+
             <button
               onClick={() => { setMonth(addMonths(month, 1)); setSelectedDay(null) }}
               className="w-8 h-8 flex items-center justify-center rounded-lg text-ink2 hover:text-ink hover:bg-cream transition-colors"
@@ -112,9 +116,7 @@ export const DriverSchedulePage: React.FC = () => {
           {/* Days grid */}
           <div className="grid grid-cols-7 gap-0.5 px-2 py-2">
             {loading
-              ? [...Array(35)].map((_, i) => (
-                  <div key={i} className="aspect-square skeleton rounded-lg" />
-                ))
+              ? [...Array(35)].map((_, i) => <div key={i} className="aspect-square skeleton rounded-lg" />)
               : calendarDays.map((d) => {
                   const dayShifts = shiftsForDay(d)
                   const hasShift = dayShifts.length > 0
@@ -140,9 +142,14 @@ export const DriverSchedulePage: React.FC = () => {
                           : 'hover:bg-cream text-ink2 hover:text-ink'
                       } ${todayDay && !isSelected ? 'ring-2 ring-ink ring-offset-1' : ''}`}
                     >
-                      <span className={`text-xs font-bold ${isSelected ? 'text-yellow' : hasShift ? 'text-ink' : ''}`}>
+                      <span
+                        className={`text-xs font-bold ${
+                          isSelected ? 'text-yellow' : hasShift ? 'text-ink' : ''
+                        }`}
+                      >
                         {format(d, 'd')}
                       </span>
+
                       {hasShift && !isSelected && (
                         <span className="w-1 h-1 rounded-full bg-ink" />
                       )}
@@ -158,7 +165,7 @@ export const DriverSchedulePage: React.FC = () => {
           <div className="flex items-center gap-4 px-4 py-2.5 border-t border-line">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-yellow border border-yellow border-opacity-50" />
-              <span className="text-[10px] text-ink2 font-medium">Com turno</span>
+              <span className="text-[10px] text-ink2 font-medium">Dia de trabalho</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm border-2 border-ink" />
@@ -175,6 +182,7 @@ export const DriverSchedulePage: React.FC = () => {
                 {format(selectedDay, "EEEE, d 'de' MMMM", { locale: ptPT })}
               </h3>
             </div>
+
             {selectedShifts.length === 0 ? (
               <div className="px-4 py-6 text-center">
                 <p className="text-sm text-ink2">Sem turno neste dia.</p>
@@ -182,23 +190,22 @@ export const DriverSchedulePage: React.FC = () => {
             ) : (
               <div className="divide-y divide-line">
                 {selectedShifts.map((s) => (
-                  <div key={s.id} className="px-4 py-3">
-                    {s.start_at && s.end_at && (
-                      <div className="flex items-center gap-2 text-sm text-ink mb-1">
-                        <Clock size={14} className="text-ink2" />
-                        <span className="font-semibold">
-                          {format(parseISO(s.start_at), 'HH:mm')} — {format(parseISO(s.end_at), 'HH:mm')}
-                        </span>
+                  <div key={s.id} className="px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-yellow bg-opacity-20 border border-yellow border-opacity-30 flex items-center justify-center text-xl">
+                        🛺
                       </div>
-                    )}
-                    {s.tuktuk_id && tuktuks[s.tuktuk_id] && (
-                      <div className="flex items-center gap-2 text-sm text-ink2">
-                        <Truck size={14} />
-                        <span>{tuktuks[s.tuktuk_id].nickname || tuktuks[s.tuktuk_id].plate}</span>
+                      <div>
+                        <p className="text-sm font-bold text-ink">Dia de trabalho</p>
+                        {s.tuktuk_id && tuktuks[s.tuktuk_id] && (
+                          <p className="text-xs text-ink2 mt-0.5">
+                            Veículo: {tuktuks[s.tuktuk_id].nickname || tuktuks[s.tuktuk_id].plate}
+                          </p>
+                        )}
                       </div>
-                    )}
+                    </div>
                     {s.notes && (
-                      <p className="text-xs text-ink2 mt-2 bg-cream rounded-lg px-3 py-2 border border-line">
+                      <p className="text-xs text-ink2 mt-3 bg-cream rounded-lg px-3 py-2 border border-line">
                         {s.notes}
                       </p>
                     )}
@@ -221,11 +228,12 @@ export const DriverSchedulePage: React.FC = () => {
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-ink">Turnos do mês</h3>
+                  <h3 className="text-sm font-bold text-ink">Dias de trabalho</h3>
                   <span className="text-xs text-ink2 bg-card border border-line px-2 py-1 rounded-lg shadow-card">
-                    {shifts.length} {shifts.length === 1 ? 'turno' : 'turnos'}
+                    {shifts.length} {shifts.length === 1 ? 'dia' : 'dias'}
                   </span>
                 </div>
+
                 {shifts.map((s) => (
                   <button
                     key={s.id}
@@ -237,21 +245,17 @@ export const DriverSchedulePage: React.FC = () => {
                         <p className="text-sm font-bold text-ink capitalize">
                           {format(parseISO(s.shift_date), "EEEE, d 'de' MMM", { locale: ptPT })}
                         </p>
-                        <div className="flex items-center gap-3 mt-1">
-                          {s.start_at && s.end_at && (
-                            <span className="flex items-center gap-1 text-xs text-ink2">
-                              <Clock size={11} />
-                              {format(parseISO(s.start_at), 'HH:mm')}–{format(parseISO(s.end_at), 'HH:mm')}
-                            </span>
-                          )}
-                          {s.tuktuk_id && tuktuks[s.tuktuk_id] && (
-                            <span className="flex items-center gap-1 text-xs text-ink2">
-                              🛺 {tuktuks[s.tuktuk_id].nickname || tuktuks[s.tuktuk_id].plate}
-                            </span>
-                          )}
-                        </div>
+                        {s.tuktuk_id && tuktuks[s.tuktuk_id] && (
+                          <p className="text-xs text-ink2 mt-0.5">
+                            🛺 {tuktuks[s.tuktuk_id].nickname || tuktuks[s.tuktuk_id].plate}
+                          </p>
+                        )}
                       </div>
-                      <div className={`w-2 h-2 rounded-full ${isToday(parseISO(s.shift_date)) ? 'bg-yellow' : 'bg-line'} group-hover:bg-yellow transition-colors`} />
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          isToday(parseISO(s.shift_date)) ? 'bg-yellow' : 'bg-line'
+                        } group-hover:bg-yellow transition-colors`}
+                      />
                     </div>
                   </button>
                 ))}
