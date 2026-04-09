@@ -23,18 +23,70 @@ body {
   font-weight: 700;
 }
 
-.btn-primary {
-  @apply bg-ink text-yellow font-black px-6 py-3 rounded-xl hover:translate-y-[-2px] transition-transform;
+/* Skeleton loading */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 
-.btn-ghost {
-  @apply border border-ink text-ink px-6 py-3 rounded-xl hover:translate-y-[-2px] transition-transform;
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #ede8dd 25%,
+    #f5f0e6 50%,
+    #ede8dd 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 0.5rem;
 }
 
-.card-base {
-  @apply bg-white border border-line rounded-2xl p-6 hover:translate-y-[-2px] transition-transform;
+/* Page enter animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-input, textarea, select {
-  font-family: 'Outfit', sans-serif;
+.page-enter {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Pulse dot (live indicator) */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.pulse-dot {
+  animation: pulse-soft 1.8s ease-in-out infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(24, 24, 26, 0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(24, 24, 26, 0.28);
+}
+
+/* Safe area padding (mobile) */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
 }
