@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/agent-daily",
+      "schedule": "0 9 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
