@@ -20,6 +20,7 @@ import { AdminPage } from './pages/admin/AdminPage'
 
 // Components
 import { SupportWidget } from './components/SupportWidget'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Driver Pages
 import { TodayPage } from './pages/driver/TodayPage'
@@ -85,6 +86,7 @@ const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <Router>
       <AuthProvider>
         <Routes>
@@ -120,5 +122,6 @@ export default function App() {
         <SupportWidget />
       </AuthProvider>
     </Router>
+    </ErrorBoundary>
   )
 }
