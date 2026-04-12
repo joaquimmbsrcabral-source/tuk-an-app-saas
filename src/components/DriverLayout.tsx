@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Logo } from './Logo'
 import { StatusBadge } from './StatusBadge'
+import { PushNotificationPrompt } from './PushNotificationPrompt'
 import { Home, History, User, Calendar, DollarSign } from 'lucide-react'
 
 interface DriverLayoutProps {
@@ -40,6 +41,9 @@ export const DriverLayout: React.FC<DriverLayoutProps> = ({ children }) => {
           </div>
         </div>
       </header>
+
+      {/* Push notification prompt for drivers */}
+      <PushNotificationPrompt />
 
       <main className="flex-1 overflow-auto pb-20">{children}</main>
 
