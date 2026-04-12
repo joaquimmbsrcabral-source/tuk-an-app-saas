@@ -22,6 +22,7 @@ import { AdminPage } from './pages/admin/AdminPage'
 import { BookingWidget } from './pages/public/BookingWidget'
 import { BookingSuccess } from './pages/public/BookingSuccess'
 import { BookingCancel } from './pages/public/BookingCancel'
+import { LandingPage } from './pages/public/LandingPage'
 
 // Components
 import { SupportWidget } from './components/SupportWidget'
@@ -126,7 +127,7 @@ export default function App() {
           <Route path="/driver/profile" element={<DriverRoute><ProfilePage /></DriverRoute>} />
 
           {/* Fallback */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
         <SupportWidget />
