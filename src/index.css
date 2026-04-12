@@ -6,6 +6,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -17,6 +21,12 @@ html, body {
 
 body {
   background-color: #FAF3E3;
+  color: #18181A;
+}
+
+/* Selection styling */
+::selection {
+  background: #F5C518;
   color: #18181A;
 }
 
@@ -52,9 +62,24 @@ body {
   @apply border-2 border-ink text-ink px-6 py-3 rounded-xl hover:translate-y-[-2px] active:translate-y-0 transition-all;
 }
 
+.btn-yellow {
+  @apply bg-yellow text-ink font-black px-6 py-3 rounded-xl hover:translate-y-[-2px] active:translate-y-0 transition-all shadow-lg shadow-yellow/20 hover:shadow-xl hover:shadow-yellow/30;
+}
+
 /* Cards */
 .card-base {
   @apply bg-white border border-line rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow;
+}
+
+.card-hover {
+  @apply bg-white border border-line rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* Form elements */
@@ -97,6 +122,16 @@ input:focus, textarea:focus, select:focus {
   animation: fadeIn 0.25s ease-out;
 }
 
+/* Slide up animation for modals/toasts */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
 /* Badge pulse */
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }
@@ -128,4 +163,32 @@ input:focus, textarea:focus, select:focus {
   width: 3px;
   background: #F5C518;
   border-radius: 0 3px 3px 0;
+}
+
+/* Toast notification */
+.toast {
+  @apply fixed bottom-6 right-6 bg-ink text-white px-6 py-3 rounded-xl shadow-lg z-50;
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Status indicator */
+.status-dot {
+  @apply w-2 h-2 rounded-full;
+}
+.status-dot.online { @apply bg-green; }
+.status-dot.offline { @apply bg-muted; }
+.status-dot.busy { @apply bg-copper; }
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #F5C518 0%, #C85A3A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Print styles */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
 }
