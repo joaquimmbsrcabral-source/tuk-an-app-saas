@@ -18,6 +18,11 @@ import { OwnerSchedulePage } from './pages/owner/SchedulePage'
 import { SupportPage } from './pages/owner/SupportPage'
 import { AdminPage } from './pages/admin/AdminPage'
 
+// Public Pages
+import { BookingWidget } from './pages/public/BookingWidget'
+import { BookingSuccess } from './pages/public/BookingSuccess'
+import { BookingCancel } from './pages/public/BookingCancel'
+
 // Components
 import { SupportWidget } from './components/SupportWidget'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -90,6 +95,11 @@ export default function App() {
     <Router>
       <AuthProvider>
         <Routes>
+          {/* Public Booking Routes (no auth required) */}
+          <Route path="/book" element={<BookingWidget />} />
+          <Route path="/book/success" element={<BookingSuccess />} />
+          <Route path="/book/cancel" element={<BookingCancel />} />
+
           {/* Auth Routes */}
           <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
           <Route path="/signup" element={<AuthLayout><SignupPage /></AuthLayout>} />
