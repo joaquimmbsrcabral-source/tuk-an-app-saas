@@ -6,13 +6,15 @@ interface ModalProps {
   onClose: () => void
   title?: string
   children: React.ReactNode
-  size?: 'sm' | 'md' | 'lg'
+  footer?: React.ReactNode
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 const sizeClasses = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-lg',
+  xl: 'max-w-xl',
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -20,14 +22,21 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   children,
+  footer,
   size = 'md',
 }) => {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
-    if (isOpen) document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+    if (isOpen) {
+      document.addEventListener('keydown', handler)
+      document.body.style.overflow = 'hidden'
+    }
+    return () => {
+      document.removeEventListener('keydown', handler)
+      document.body.style.overflow = ''
+    }
   }, [isOpen, onClose])
 
   if (!isOpen) return null
@@ -39,13 +48,12 @@ export const Modal: React.FC<ModalProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-ink bg-opacity-40"
-        style={{ backdropFilter: 'blur(4px)' }}
+        className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
       />
 
       {/* Panel */}
       <div
-        className={`relative w-full ${sizeClasses[size]} bg-card border border-line rounded-2xl shadow-card-lg overflow-hidden page-enter`}
+        className={`relative w-full ${sizeClasses[size]} bg-card border border-line rounded-2xl shadow-2xl overflow-hidden page-enter`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -54,7 +62,7 @@ export const Modal: React.FC<ModalProps> = ({
             <h2 className="text-base font-bold text-ink">{title}</h2>
             <button
               onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-ink2 hover:text-ink hover:bg-cream transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-ink2 hover:text-ink hover:bg-cream transition-all duration-150 active:scale-95"
             >
               <X size={16} />
             </button>
@@ -62,9 +70,16 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Body */}
-        <div className="px-5 py-4 overflow-y-auto max-h-[80vh]">
+        <div className="px-5 py-4 overflow-y-auto max-h-[70vh]">
           {children}
         </div>
+
+        {/* Footer */}
+        {footer && (
+          <div className="px-5 py-3.5 border-t border-line bg-cream/30 flex items-center justify-end gap-2">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   )
