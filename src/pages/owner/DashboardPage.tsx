@@ -57,11 +57,6 @@ export const DashboardPage: React.FC = () => {
           .select('*')
           .eq('company_id', profile.company_id)
 
-        const { data: streetSales } = await supabase
-          .from('street_sales')
-          .select('*')
-          .eq('company_id', profile.company_id)
-
         const now = new Date()
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -87,31 +82,27 @@ export const DashboardPage: React.FC = () => {
           driverRevenue[p.received_by].amount += p.amount
         })
 
-        streetSales?.forEach((s) => {
-          const saleDate = new Date(s.sold_at)
-          const saleAmount = (s.price || 0) + (s.tip_amount || 0)
-          const day = saleDate.toISOString().split('T')[0]
-          if (!dailyRevenue[day]) dailyRevenue[day] = 0
-          dailyRevenue[day] += saleAmount
-          if (isTodayDate(saleDate)) todayRevenue += saleAmount
-          if (saleDate >= weekAgo) weekRevenue += saleAmount
-          if (saleDate >= monthStart) monthRevenue += saleAmount
-          if (!driverRevenue[s.driver_id]) {
-            driverRevenue[s.driver_id] = { name: s.driver_id, amount: 0 }
-          }
-          driverRevenue[s.driver_id].amount += saleAmount
-        })
-
         let topDriver = { name: '-', revenue: 0 }
-        Object.values(driverRevenue).forEach((d) => {
-          if (d.amount > topDriver.revenue) topDriver = { name: d.name, revenue: d.amount }
+        let topDriverId = ''
+        Object.entries(driverRevenue).forEach(([id, d]) => {
+          if (d.amount > topDriver.revenue) {
+            topDriver = { name: d.name, revenue: d.amount }
+            topDriverId = id
+          }
         })
 
-        const todayBookings =
+        // Resolve driver UUID to full_name
+        if (topDriverId) {
+          const { data: driverProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', topDriverId)
+            .single()
+          if (driverProfile?.full_name) topDriver.name = driverProfile.full_name
+        }
+
+        const todayTours =
           bookings?.filter((b) => isTodayDate(b.start_at) && b.status !== 'cancelled').length || 0
-        const todayStreetSales =
-          streetSales?.filter((s) => isTodayDate(new Date(s.sold_at))).length || 0
-        const todayTours = todayBookings + todayStreetSales
 
         bookings?.forEach((b) => {
           const bookingPayments = payments?.filter((p) => p.booking_id === b.id) || []
@@ -180,12 +171,12 @@ export const DashboardPage: React.FC = () => {
     <OwnerLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-wrap items-center gap-3 justify-between">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-ink">Dashboard</h1>
             <p className="text-sm text-ink2 mt-0.5">Visão geral do negócio</p>
           </div>
-          <div className="hidden sm:flex text-xs text-ink2 bg-card border border-line px-3 py-1.5 rounded-lg shadow-card">
+          <div className="text-xs text-ink2 bg-card border border-line px-3 py-1.5 rounded-lg shadow-card">
             {new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
         </div>
