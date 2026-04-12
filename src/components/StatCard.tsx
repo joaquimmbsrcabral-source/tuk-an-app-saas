@@ -4,23 +4,23 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 interface StatCardProps {
   label: string
   value: string | number
-  icon?: string
+  icon?: React.ReactNode
   accent?: 'yellow' | 'copper' | 'green' | 'ink'
   sublabel?: string
   trend?: 'up' | 'down' | 'neutral'
 }
 
 const accentStyles: Record<string, string> = {
-  yellow: 'bg-yellow bg-opacity-15 text-yellow border border-yellow border-opacity-30',
-  copper: 'bg-copper bg-opacity-10 text-copper border border-copper border-opacity-20',
-  green: 'bg-green bg-opacity-10 text-green border border-green border-opacity-20',
-  ink: 'bg-ink bg-opacity-8 text-ink border border-ink border-opacity-10',
+  yellow: 'bg-yellow/10 text-yellow',
+  copper: 'bg-copper/10 text-copper',
+  green: 'bg-green/10 text-green',
+  ink: 'bg-ink/8 text-ink',
 }
 
-const trendIcon = {
-  up: <TrendingUp size={12} className="text-green" />,
-  down: <TrendingDown size={12} className="text-copper" />,
-  neutral: <Minus size={12} className="text-ink2" />,
+const trendConfig = {
+  up: { icon: <TrendingUp size={14} />, color: 'text-green', bg: 'bg-green/10' },
+  down: { icon: <TrendingDown size={14} />, color: 'text-copper', bg: 'bg-copper/10' },
+  neutral: { icon: <Minus size={14} />, color: 'text-ink2', bg: 'bg-ink/5' },
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -30,26 +30,26 @@ export const StatCard: React.FC<StatCardProps> = ({
   accent = 'yellow',
   sublabel,
   trend,
-}) => {
-  return (
-    <div className="bg-card border border-line rounded-2xl shadow-card hover:shadow-card-md transition-shadow duration-200 p-5">
-      <div className="flex items-start justify-between mb-3">
-        {icon && (
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${accentStyles[accent]}`}>
-            {icon}
-          </div>
-        )}
-        {trend && (
-          <div className="flex items-center gap-1">
-            {trendIcon[trend]}
-          </div>
-        )}
-      </div>
-      <p className="text-xs font-bold text-ink2 uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-black text-ink leading-none truncate">{value}</p>
-      {sublabel && (
-        <p className="text-xs text-muted mt-1">{sublabel}</p>
+}) => (
+  <div className="bg-card border border-line rounded-2xl p-5 shadow-card hover:shadow-card-md transition-all duration-200">
+    <div className="flex items-start justify-between mb-3">
+      <span className="text-sm font-medium text-ink2">{label}</span>
+      {icon && (
+        <div className={`w-9 h-9 rounded-xl ${accentStyles[accent]} flex items-center justify-center`}>
+          {icon}
+        </div>
       )}
     </div>
-  )
-}
+    <div className="flex items-end gap-2">
+      <span className="text-2xl font-extrabold text-ink tracking-tight">{value}</span>
+      {trend && (
+        <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-xs font-medium ${trendConfig[trend].color} ${trendConfig[trend].bg} mb-0.5`}>
+          {trendConfig[trend].icon}
+        </span>
+      )}
+    </div>
+    {sublabel && (
+      <p className="mt-1.5 text-xs text-muted">{sublabel}</p>
+    )}
+  </div>
+)
