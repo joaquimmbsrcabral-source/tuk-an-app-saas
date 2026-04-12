@@ -1,46 +1,54 @@
 import React from 'react'
+import { Loader2 } from 'lucide-react'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline'
+  size?: 'sm' | 'md' | 'lg'
   loading?: boolean
+  icon?: React.ReactNode
   children: React.ReactNode
 }
 
-const variants: Record<string, string> = {
-  primary: 'bg-ink text-yellow font-black hover:bg-opacity-90 shadow-card hover:shadow-card-md active:scale-[0.97]',
-  secondary: 'bg-yellow text-ink font-black hover:bg-opacity-90 shadow-card hover:shadow-card-md active:scale-[0.97]',
-  ghost: 'bg-transparent text-ink border border-line hover:bg-cream active:scale-[0.97]',
-  danger: 'bg-copper text-white font-bold hover:bg-opacity-90 shadow-card active:scale-[0.97]',
+const variantStyles: Record<string, string> = {
+  primary: 'bg-yellow text-ink font-bold hover:bg-yellow/90 shadow-md shadow-yellow/20 active:scale-[0.98]',
+  secondary: 'bg-ink text-white font-bold hover:bg-ink/90 shadow-md active:scale-[0.98]',
+  ghost: 'bg-transparent text-ink border border-line hover:bg-cream active:scale-[0.98]',
+  danger: 'bg-red-500 text-white font-bold hover:bg-red-600 shadow-md active:scale-[0.98]',
+  outline: 'bg-white text-ink border-2 border-ink hover:bg-ink hover:text-white active:scale-[0.98]',
+}
+
+const sizeStyles: Record<string, string> = {
+  sm: 'px-3 py-1.5 text-xs rounded-lg gap-1.5',
+  md: 'px-5 py-2.5 text-sm rounded-xl gap-2',
+  lg: 'px-7 py-3.5 text-base rounded-xl gap-2.5',
 }
 
 export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
+  size = 'md',
   loading = false,
+  icon,
   children,
   className = '',
   disabled,
   ...props
 }) => {
-  const base = 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-1'
   const isDisabled = disabled || loading
 
   return (
     <button
-      {...props}
+      className={`inline-flex items-center justify-center font-outfit transition-all duration-200
+        ${variantStyles[variant]} ${sizeStyles[size]}
+        ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+        ${className}`}
       disabled={isDisabled}
-      className={`${base} ${variants[variant]} ${isDisabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`}
+      {...props}
     >
-      {loading && (
-        <svg
-          className="animate-spin h-4 w-4 flex-shrink-0"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      )}
+      {loading ? (
+        <Loader2 className={`animate-spin ${size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
+      ) : icon ? (
+        <span className="flex-shrink-0">{icon}</span>
+      ) : null}
       {children}
     </button>
   )
