@@ -62,7 +62,6 @@ export const DashboardPage: React.FC = () => {
     const fetchStats = async () => {
       if (!profile) return
       try {
-        // Fetch payments, bookings AND street_sales
         const [paymentsRes, bookingsRes, streetSalesRes, tukTuksRes] = await Promise.all([
           supabase.from('payments').select('*').eq('company_id', profile.company_id),
           supabase.from('bookings').select('*').eq('company_id', profile.company_id),
@@ -89,7 +88,6 @@ export const DashboardPage: React.FC = () => {
         const dailyBookingRevenue: Record<string, number> = {}
         const dailyStreetRevenue: Record<string, number> = {}
 
-        // Process booking payments
         payments.forEach((p: any) => {
           const paymentDate = new Date(p.received_at)
           const day = paymentDate.toISOString().split('T')[0]
@@ -103,7 +101,6 @@ export const DashboardPage: React.FC = () => {
           }
         })
 
-        // Process street sales (missing from old dashboard!)
         streetSales.forEach((s: any) => {
           const saleDate = new Date(s.created_at)
           const day = saleDate.toISOString().split('T')[0]
@@ -120,7 +117,6 @@ export const DashboardPage: React.FC = () => {
           }
         })
 
-        // TukTuk revenue from bookings
         bookings.forEach((b: any) => {
           const bookingPayments = payments.filter((p: any) => p.booking_id === b.id)
           const bookingTotal = bookingPayments.reduce((sum: number, p: any) => sum + p.amount, 0)
@@ -129,7 +125,6 @@ export const DashboardPage: React.FC = () => {
           }
         })
 
-        // Top driver
         let topDriver = { name: '-', revenue: 0 }
         let topDriverId = ''
         Object.entries(driverRevenue).forEach(([id, amount]) => {
@@ -147,7 +142,6 @@ export const DashboardPage: React.FC = () => {
           if (driverProfile?.full_name) topDriver.name = driverProfile.full_name
         }
 
-        // Top TukTuk (FIXED: use tuktukMap instead of broken query)
         let topTuktuk = { nickname: '-', revenue: 0 }
         Object.entries(tuktukRevenue).forEach(([id, amount]) => {
           if (amount > topTuktuk.revenue) {
@@ -156,10 +150,8 @@ export const DashboardPage: React.FC = () => {
         })
 
         const todayTours = bookings.filter((b: any) => isTodayDate(b.start_at) && b.status !== 'cancelled').length
-
         setStats({ todayRevenue, weekRevenue, monthRevenue, todayTours, topDriver, topTuktuk })
 
-        // Chart data (7 days) with split booking vs street
         const chartDays = []
         for (let i = 6; i >= 0; i--) {
           const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
@@ -171,7 +163,6 @@ export const DashboardPage: React.FC = () => {
         }
         setChartData(chartDays)
 
-        // Booking widget conversion metrics
         const monthBookings = bookings.filter((b: any) => new Date(b.created_at) >= monthStart)
         const widgetBookings = monthBookings.filter((b: any) => b.source === 'widget' || b.source === 'online')
         const confirmedBookings = monthBookings.filter((b: any) => b.status === 'confirmed' || b.status === 'completed')
@@ -180,7 +171,6 @@ export const DashboardPage: React.FC = () => {
         const totalPaid = payments.filter((p: any) => new Date(p.received_at) >= monthStart).reduce((s: number, p: any) => s + p.amount, 0)
         const avgValue = confirmedBookings.length > 0 ? totalPaid / confirmedBookings.length : 0
 
-        // Source breakdown for pie chart
         const sourceCounts: Record<string, number> = {}
         monthBookings.forEach((b: any) => {
           const src = b.source || 'manual'
@@ -240,48 +230,46 @@ export const DashboardPage: React.FC = () => {
     return null
   }
 
+  const totalBookings = bookingStats.confirmed + bookingStats.pending + bookingStats.cancelled
+
   return (
     <OwnerLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-ink">Dashboard</h1>
-            <p className="text-sm text-ink2 mt-0.5">Vis\u00e3o geral do neg\u00f3cio</p>
+            <p className="text-sm text-ink2 mt-0.5">Visão geral do negócio</p>
           </div>
           <div className="text-xs text-ink2 bg-card border border-line px-3 py-1.5 rounded-lg shadow-card">
             {new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
         </div>
 
-        {/* KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <StatCard label="Receita Hoje" value={formatCurrency(stats.todayRevenue)} icon="\ud83d\udcca" accent="yellow" />
-          <StatCard label="Receita Semana" value={formatCurrency(stats.weekRevenue)} icon="\ud83d\udcc8" accent="green" />
-          <StatCard label="Receita M\u00eas" value={formatCurrency(stats.monthRevenue)} icon="\ud83d\udcb0" accent="yellow" />
-          <StatCard label="Tours Hoje" value={stats.todayTours} icon="\ud83d\udefa" accent="ink" />
+          <StatCard label="Receita Hoje" value={formatCurrency(stats.todayRevenue)} icon="📊" accent="yellow" />
+          <StatCard label="Receita Semana" value={formatCurrency(stats.weekRevenue)} icon="📈" accent="green" />
+          <StatCard label="Receita Mês" value={formatCurrency(stats.monthRevenue)} icon="💰" accent="yellow" />
+          <StatCard label="Tours Hoje" value={stats.todayTours} icon="🛺" accent="ink" />
           <StatCard
             label="Top Motorista"
             value={stats.topDriver.name}
-            icon="\ud83d\udc64"
+            icon="👤"
             accent="copper"
             sublabel={stats.topDriver.revenue > 0 ? formatCurrency(stats.topDriver.revenue) : 'esta semana'}
           />
           <StatCard
             label="Top TukTuk"
             value={stats.topTuktuk.nickname}
-            icon="\ud83c\udfc6"
+            icon="🏆"
             accent="yellow"
             sublabel={stats.topTuktuk.revenue > 0 ? formatCurrency(stats.topTuktuk.revenue) : ''}
           />
         </div>
 
-        {/* Revenue Chart + Drivers row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Revenue Chart with Recharts */}
           <div className="bg-card border border-line rounded-2xl shadow-card overflow-hidden">
             <div className="px-5 py-4 border-b border-line flex items-center justify-between">
-              <h2 className="text-sm font-bold text-ink">Receita \u2014 \u00faltimos 7 dias</h2>
+              <h2 className="text-sm font-bold text-ink">Receita — últimos 7 dias</h2>
               <span className="text-xs font-bold text-ink">{formatCurrency(stats.weekRevenue)}</span>
             </div>
             <div className="px-2 pb-4 pt-4" style={{ height: 240 }}>
@@ -302,7 +290,6 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Motoristas Live */}
           <div className="bg-card border border-line rounded-2xl shadow-card overflow-hidden">
             <div className="px-5 py-4 border-b border-line flex items-center justify-between">
               <h2 className="text-sm font-bold text-ink">Motoristas</h2>
@@ -313,7 +300,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             {liveDrivers.length === 0 ? (
               <div className="px-5 py-8 text-center">
-                <p className="text-sm text-ink2">Convida motoristas na p\u00e1gina Motoristas.</p>
+                <p className="text-sm text-ink2">Convida motoristas na página Motoristas.</p>
               </div>
             ) : (
               <div className="divide-y divide-line max-h-[220px] overflow-y-auto">
@@ -324,7 +311,7 @@ export const DashboardPage: React.FC = () => {
                         {(d.full_name || 'M').charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-ink leading-none">{d.full_name || '\u2014'}</div>
+                        <div className="text-sm font-semibold text-ink leading-none">{d.full_name || '—'}</div>
                         {d.phone && <div className="text-xs text-ink2 mt-0.5">{d.phone}</div>}
                       </div>
                     </div>
@@ -336,17 +323,15 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Booking Conversion Metrics */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Conversion KPIs */}
           <div className="lg:col-span-2 bg-card border border-line rounded-2xl shadow-card overflow-hidden">
             <div className="px-5 py-4 border-b border-line">
-              <h2 className="text-sm font-bold text-ink">M\u00e9tricas de Reservas \u2014 este m\u00eas</h2>
+              <h2 className="text-sm font-bold text-ink">Métricas de Reservas — este mês</h2>
             </div>
             <div className="p-5">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-black text-ink">{bookingStats.confirmed + bookingStats.pending + bookingStats.cancelled}</div>
+                  <div className="text-2xl font-black text-ink">{totalBookings}</div>
                   <div className="text-xs text-ink2 mt-1">Total Reservas</div>
                 </div>
                 <div className="text-center">
@@ -354,17 +339,14 @@ export const DashboardPage: React.FC = () => {
                   <div className="text-xs text-ink2 mt-1">Confirmadas</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-black text-ink">
-                    {bookingStats.conversionRate.toFixed(0)}%
-                  </div>
-                  <div className="text-xs text-ink2 mt-1">Taxa Convers\u00e3o</div>
+                  <div className="text-2xl font-black text-ink">{bookingStats.conversionRate.toFixed(0)}%</div>
+                  <div className="text-xs text-ink2 mt-1">Taxa Conversão</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-black text-ink">{formatCurrency(bookingStats.avgValue)}</div>
-                  <div className="text-xs text-ink2 mt-1">Valor M\u00e9dio</div>
+                  <div className="text-xs text-ink2 mt-1">Valor Médio</div>
                 </div>
               </div>
-              {/* Progress bars */}
               <div className="mt-5 space-y-3">
                 <div>
                   <div className="flex justify-between text-xs mb-1">
@@ -372,9 +354,7 @@ export const DashboardPage: React.FC = () => {
                     <span className="font-medium text-green">{bookingStats.confirmed}</span>
                   </div>
                   <div className="w-full h-2 bg-bg rounded-full overflow-hidden">
-                    <div className="h-full bg-green rounded-full transition-all" style={{
-                      width: `${(bookingStats.confirmed + bookingStats.pending + bookingStats.cancelled) > 0 ? (bookingStats.confirmed / (bookingStats.confirmed + bookingStats.pending + bookingStats.cancelled)) * 100 : 0}%`
-                    }} />
+                    <div className="h-full bg-green rounded-full transition-all" style={{ width: `${totalBookings > 0 ? (bookingStats.confirmed / totalBookings) * 100 : 0}%` }} />
                   </div>
                 </div>
                 <div>
@@ -383,9 +363,7 @@ export const DashboardPage: React.FC = () => {
                     <span className="font-medium text-yellow-600">{bookingStats.pending}</span>
                   </div>
                   <div className="w-full h-2 bg-bg rounded-full overflow-hidden">
-                    <div className="h-full bg-yellow rounded-full transition-all" style={{
-                      width: `${(bookingStats.confirmed + bookingStats.pending + bookingStats.cancelled) > 0 ? (bookingStats.pending / (bookingStats.confirmed + bookingStats.pending + bookingStats.cancelled)) * 100 : 0}%`
-                    }} />
+                    <div className="h-full bg-yellow rounded-full transition-all" style={{ width: `${totalBookings > 0 ? (bookingStats.pending / totalBookings) * 100 : 0}%` }} />
                   </div>
                 </div>
                 <div>
@@ -394,16 +372,13 @@ export const DashboardPage: React.FC = () => {
                     <span className="font-medium text-red-500">{bookingStats.cancelled}</span>
                   </div>
                   <div className="w-full h-2 bg-bg rounded-full overflow-hidden">
-                    <div className="h-full bg-red-400 rounded-full transition-all" style={{
-                      width: `${(bookingStats.confirmed + bookingStats.pending + bookingStats.cancelled) > 0 ? (bookingStats.cancelled / (bookingStats.confirmed + bookingStats.pending + bookingStats.cancelled)) * 100 : 0}%`
-                    }} />
+                    <div className="h-full bg-red-400 rounded-full transition-all" style={{ width: `${totalBookings > 0 ? (bookingStats.cancelled / totalBookings) * 100 : 0}%` }} />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Source Breakdown Pie */}
           <div className="bg-card border border-line rounded-2xl shadow-card overflow-hidden">
             <div className="px-5 py-4 border-b border-line">
               <h2 className="text-sm font-bold text-ink">Origem das Reservas</h2>
@@ -432,7 +407,7 @@ export const DashboardPage: React.FC = () => {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-sm text-ink2">
-                  Sem dados este m\u00eas
+                  Sem dados este mês
                 </div>
               )}
             </div>
