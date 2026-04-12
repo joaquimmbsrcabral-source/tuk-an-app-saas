@@ -6,6 +6,7 @@ interface CardProps {
   elevated?: boolean
   noPadding?: boolean
   onClick?: () => void
+  header?: React.ReactNode
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -14,20 +15,27 @@ export const Card: React.FC<CardProps> = ({
   elevated = false,
   noPadding = false,
   onClick,
+  header,
 }) => {
-  const base = 'bg-card border border-line rounded-2xl transition-shadow duration-200'
   const shadow = elevated
     ? 'shadow-card-md hover:shadow-card-lg'
     : 'shadow-card hover:shadow-card-md'
   const padding = noPadding ? '' : 'p-5'
-  const cursor = onClick ? 'cursor-pointer' : ''
+  const cursor = onClick ? 'cursor-pointer active:scale-[0.99]' : ''
 
   return (
     <div
-      className={`${base} ${shadow} ${padding} ${cursor} ${className}`}
+      className={`bg-card border border-line rounded-2xl transition-all duration-200 ${shadow} ${cursor} ${className}`}
       onClick={onClick}
     >
-      {children}
+      {header && (
+        <div className="px-5 py-4 border-b border-line">
+          {header}
+        </div>
+      )}
+      <div className={padding}>
+        {children}
+      </div>
     </div>
   )
 }
