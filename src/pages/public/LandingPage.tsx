@@ -407,13 +407,13 @@ export const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
               <Logo variant="light" />
-              <p className="text-sm text-white/60 max-w-sm leading-relaxed mt-4">
+              <p className="text-sm text-white/80 max-w-sm leading-relaxed mt-4">
                 A plataforma de gestão feita para operadores de TukTuk em Portugal. Reservas, frota, motoristas e pagamentos — tudo num só lugar.
               </p>
             </div>
             <div>
               <h4 className="font-bold text-sm mb-4">Produto</h4>
-              <ul className="space-y-2 text-sm text-white/60">
+              <ul className="space-y-2 text-sm text-white/80">
                 <li><a href="#features" className="hover:text-white transition-colors">Funcionalidades</a></li>
                 <li><a href="#pricing" className="hover:text-white transition-colors">Preços</a></li>
                 <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
@@ -422,7 +422,7 @@ export const LandingPage: React.FC = () => {
             </div>
             <div>
               <h4 className="font-bold text-sm mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-white/60">
+              <ul className="space-y-2 text-sm text-white/80">
                 <li><a href="#" className="hover:text-white transition-colors">Termos de Serviço</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Política de Privacidade</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">RGPD</a></li>
@@ -430,8 +430,8 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-white/40">© 2026 Tuk an App. Todos os direitos reservados.</p>
-            <p className="text-sm text-white/40">Feito com ❤️ em Lisboa</p>
+            <p className="text-sm text-white/70">© 2026 Tuk an App. Todos os direitos reservados.</p>
+            <p className="text-sm text-white/70">Feito com ❤️ em Lisboa</p>
           </div>
         </div>
       </footer>
