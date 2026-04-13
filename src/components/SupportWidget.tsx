@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { MessageCircle, X, Send, Minus } from 'lucide-react'
+import { MessageCircle, X, Send, Minus, Car, Hand} from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -189,7 +189,7 @@ export const SupportWidget: React.FC = () => {
           {/* Header */}
           <div className="bg-ink px-4 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🛺</span>
+              <Car size={18} className="text-yellow" />
               <div>
                 <p className="text-yellow text-sm font-bold">Suporte Tuk an App</p>
                 <p className="text-white text-opacity-60 text-xs">Normalmente respondemos em minutos</p>
@@ -215,7 +215,7 @@ export const SupportWidget: React.FC = () => {
           <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-cream">
             {messages.length === 0 && !thread && (
               <div className="text-center py-8 px-4">
-                <p className="text-3xl mb-2">👋</p>
+                <div className="text-3xl mb-2"><Hand size={32} className="text-yellow" /></div>
                 <p className="text-ink font-bold text-sm">Precisa de ajuda?</p>
                 <p className="text-ink2 text-xs mt-1">
                   Escreva a sua mensagem e respondemos o mais depressa possível.
