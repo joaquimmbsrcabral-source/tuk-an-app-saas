@@ -100,7 +100,7 @@ export const DriverFinancePage: React.FC = () => {
             <Stat label="Tours" value={week.count.toString()} />
             <Stat label="Vendas brutas" value={formatCurrency(week.gross)} />
             <Stat label="Comissão" value={formatCurrency(week.commission)} />
-            <Stat label="Gorjetas 🤫" value={formatCurrency(week.tips)} />
+            <Stat label="Gorjetas " value={formatCurrency(week.tips)} />
           </div>
           <div className="border-t border-line mt-3 pt-3">
             <Stat label="Total a receber" value={formatCurrency(week.total)} accent />
@@ -113,7 +113,7 @@ export const DriverFinancePage: React.FC = () => {
             <Stat label="Tours" value={month.count.toString()} />
             <Stat label="Vendas brutas" value={formatCurrency(month.gross)} />
             <Stat label="Comissão" value={formatCurrency(month.commission)} />
-            <Stat label="Gorjetas 🤫" value={formatCurrency(month.tips)} />
+            <Stat label="Gorjetas " value={formatCurrency(month.tips)} />
           </div>
           <div className="border-t border-line mt-3 pt-3">
             <Stat label="Total a receber" value={formatCurrency(month.total)} accent />
@@ -143,13 +143,13 @@ export const DriverFinancePage: React.FC = () => {
                   <li key={i} className="py-2 flex items-center justify-between text-sm">
                     <div>
                       <p className="text-ink">
-                        {r.isStreet ? '🚶 Rua' : '📅 Reserva'} · {r.pax}p
+                        {r.isStreet ? 'Rua' : 'Reserva'} · {r.pax}p
                       </p>
                       <p className="text-xs text-ink2">{r.date.toLocaleDateString('pt-PT')}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-ink">{formatCurrency(r.gross)}</p>
-                      {r.tip > 0 && <p className="text-xs text-green">+{formatCurrency(r.tip)} 🤫</p>}
+                      {r.tip > 0 && <p className="text-xs text-green">+{formatCurrency(r.tip)} </p>}
                     </div>
                   </li>
                 ))}
