@@ -4,9 +4,29 @@ import { redirectToCheckout } from '../../lib/stripe'
 import { formatCurrency } from '../../lib/format'
 import type { TourCatalogItem } from '../../lib/types'
 
-// The default company for the public widget
-// In production, this comes from the URL slug or subdomain
-const DEFAULT_COMPANY_ID = import.meta.env.VITE_DEFAULT_COMPANY_ID || ''
+// Hardcoded fallback — the Tuk & Roll company
+const TUKNROLL_COMPANY_ID = 'd4338c09-d351-4a3e-96ed-b7f0fea69844'
+const DEFAULT_COMPANY_ID = import.meta.env.VITE_DEFAULT_COMPANY_ID || TUKNROLL_COMPANY_ID
+
+// Tour visual metadata (emoji + highlight for each known tour)
+const tourMeta: Record<string, { emoji: string; highlights: string[] }> = {
+  'Historico': {
+    emoji: '\u{1F3F0}',
+    highlights: ['Alfama', 'S\u00e9 Cathedral', 'Castelo de S. Jorge', 'Miradouros'],
+  },
+  'Nova Lisboa': {
+    emoji: '\u{2728}',
+    highlights: ['Pr\u00edncipe Real', 'Bairro Alto', 'Av. da Liberdade', 'Santos'],
+  },
+  'Belem': {
+    emoji: '\u{26F5}',
+    highlights: ['Torre de Bel\u00e9m', 'Jer\u00f3nimos', 'Past\u00e9is de Bel\u00e9m', 'LX Factory'],
+  },
+}
+
+function getTourMeta(name: string) {
+  return tourMeta[name] || { emoji: '\u{1F6FA}', highlights: [] }
+}
 
 interface BookingForm {
   customer_name: string
@@ -32,6 +52,11 @@ const initialForm: BookingForm = {
   notes: '',
 }
 
+const timeSlots = [
+  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+  '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00',
+]
+
 export function BookingWidget() {
   const [form, setForm] = useState<BookingForm>(initialForm)
   const [tours, setTours] = useState<TourCatalogItem[]>([])
@@ -39,6 +64,7 @@ export function BookingWidget() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [step, setStep] = useState(1) // 1=tour, 2=details, 3=confirm
+  const [fetchError, setFetchError] = useState(false)
 
   const selectedTour = tours.find(t => t.id === form.tour_id)
   const totalPrice = selectedTour ? selectedTour.default_price * form.pax : 0
@@ -48,14 +74,26 @@ export function BookingWidget() {
   }, [])
 
   async function fetchTours() {
-    const { data, error } = await supabase
-      .from('tour_catalog')
-      .select('*')
-      .eq('company_id', DEFAULT_COMPANY_ID)
-      .eq('active', true)
-      .order('name')
+    setLoading(true)
+    setFetchError(false)
+    try {
+      const { data, error } = await supabase
+        .from('tour_catalog')
+        .select('*')
+        .eq('company_id', DEFAULT_COMPANY_ID)
+        .eq('active', true)
+        .order('name')
 
-    if (!error && data) setTours(data)
+      if (error) {
+        console.error('Tour fetch error:', error)
+        setFetchError(true)
+      } else if (data) {
+        setTours(data)
+      }
+    } catch (err) {
+      console.error('Tour fetch exception:', err)
+      setFetchError(true)
+    }
     setLoading(false)
   }
 
@@ -65,15 +103,15 @@ export function BookingWidget() {
   }
 
   function validateStep1() {
-    if (!form.tour_id) return 'Please select a tour'
-    if (!form.date) return 'Please select a date'
+    if (!form.tour_id) return 'Please select a tour / Selecione um tour'
+    if (!form.date) return 'Please select a date / Selecione uma data'
     return null
   }
 
   function validateStep2() {
-    if (!form.customer_name.trim()) return 'Please enter your name'
+    if (!form.customer_name.trim()) return 'Please enter your name / Insira o seu nome'
     if (!form.customer_phone.trim() && !form.customer_email.trim()) {
-      return 'Please enter your phone or email'
+      return 'Please enter your phone or email / Insira o seu telefone ou email'
     }
     return null
   }
@@ -96,11 +134,9 @@ export function BookingWidget() {
     setError('')
 
     try {
-      // Calculate end time
       const startAt = new Date(`${form.date}T${form.time}:00`)
       const endAt = new Date(startAt.getTime() + selectedTour.default_duration_min * 60000)
 
-      // 1. Create booking in Supabase
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
@@ -122,7 +158,6 @@ export function BookingWidget() {
 
       if (bookingError) throw bookingError
 
-      // 2. Redirect to Stripe Checkout
       const { error: stripeError } = await redirectToCheckout({
         booking_id: booking.id,
         company_id: DEFAULT_COMPANY_ID,
@@ -139,15 +174,18 @@ export function BookingWidget() {
     }
   }
 
-  // Set min date to today
   const today = new Date().toISOString().split('T')[0]
 
+  const stepLabels = ['Tour', 'Details', 'Confirm']
+
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-sand flex items-center justify-center">
         <div className="text-center">
-          <div className="text-5xl mb-4"></div>
-          <p className="text-clay">Loading tours...</p>
+          <div className="text-5xl mb-4 animate-bounce">{'\u{1F6FA}'}</div>
+          <p className="text-clay font-medium">Loading tours...</p>
+          <p className="text-clay/60 text-sm mt-1">A carregar tours...</p>
         </div>
       </div>
     )
@@ -158,7 +196,9 @@ export function BookingWidget() {
       {/* Header */}
       <div className="bg-charcoal text-white py-6">
         <div className="max-w-lg mx-auto px-4 text-center">
-          <h1 className="text-2xl font-bold"> Tuk & Roll</h1>
+          <a href="/" className="inline-block hover:opacity-80 transition-opacity">
+            <h1 className="text-2xl font-bold">{'\u{1F6FA}'} Tuk & Roll</h1>
+          </a>
           <p className="text-sm text-sand/80 mt-1">Book your Lisbon TukTuk tour</p>
         </div>
       </div>
@@ -168,105 +208,193 @@ export function BookingWidget() {
         <div className="flex items-center justify-center gap-2 mb-6">
           {[1, 2, 3].map(s => (
             <div key={s} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                s <= step ? 'bg-copper text-white' : 'bg-cream text-clay'
-              }`}>
-                {s}
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                    s < step
+                      ? 'bg-green-500 text-white'
+                      : s === step
+                        ? 'bg-copper text-white'
+                        : 'bg-cream text-clay'
+                  }`}
+                >
+                  {s < step ? '\u2713' : s}
+                </div>
+                <span className="text-xs text-clay mt-1">{stepLabels[s - 1]}</span>
               </div>
-              {s < 3 && <div className={`w-8 h-0.5 ${s < step ? 'bg-copper' : 'bg-cream'}`} />}
+              {s < 3 && (
+                <div className={`w-12 h-0.5 mb-5 ${s < step ? 'bg-green-500' : 'bg-cream'}`} />
+              )}
             </div>
           ))}
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm flex items-start gap-2">
+            <span className="text-red-500 mt-0.5">{'\u26A0\uFE0F'}</span>
+            <span>{error}</span>
           </div>
         )}
 
         {/* Step 1: Choose Tour */}
         {step === 1 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-charcoal">Choose your tour</h2>
+          <div className="space-y-5">
+            <h2 className="text-lg font-bold text-charcoal">
+              Choose your tour <span className="text-clay font-normal text-sm">/ Escolha o seu tour</span>
+            </h2>
 
-            <div className="space-y-3">
-              {tours.map(tour => (
-                <button
-                  key={tour.id}
-                  onClick={() => handleChange('tour_id', tour.id)}
-                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                    form.tour_id === tour.id
-                      ? 'border-copper bg-copper/5'
-                      : 'border-cream bg-white hover:border-copper/30'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-charcoal">{tour.name}</h3>
-                      {tour.description && (
-                        <p className="text-sm text-clay mt-1">{tour.description}</p>
+            {/* Tour cards or error state */}
+            {fetchError || tours.length === 0 ? (
+              <div className="bg-white rounded-xl p-6 border border-cream text-center">
+                <div className="text-4xl mb-3">{fetchError ? '\u{1F614}' : '\u{1F50D}'}</div>
+                <p className="text-charcoal font-medium">
+                  {fetchError ? 'Could not load tours' : 'No tours available'}
+                </p>
+                <p className="text-clay text-sm mt-1">
+                  {fetchError
+                    ? 'Please try again / Tente novamente'
+                    : 'Check back soon / Volte em breve'}
+                </p>
+                {fetchError && (
+                  <button
+                    onClick={fetchTours}
+                    className="mt-4 px-6 py-2 bg-copper text-white rounded-xl hover:bg-copper/90 transition-colors text-sm font-medium"
+                  >
+                    Retry / Tentar novamente
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tours.map(tour => {
+                  const meta = getTourMeta(tour.name)
+                  const isSelected = form.tour_id === tour.id
+                  return (
+                    <button
+                      key={tour.id}
+                      onClick={() => handleChange('tour_id', tour.id)}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                        isSelected
+                          ? 'border-copper bg-copper/5 shadow-sm'
+                          : 'border-cream bg-white hover:border-copper/40 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex gap-3">
+                        <div className="text-3xl flex-shrink-0 mt-0.5">{meta.emoji}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start gap-2">
+                            <h3 className="font-semibold text-charcoal text-base">{tour.name}</h3>
+                            <span className="text-copper font-bold whitespace-nowrap">
+                              {formatCurrency(tour.default_price)}/pp
+                            </span>
+                          </div>
+                          {tour.description && (
+                            <p className="text-sm text-clay mt-1 line-clamp-2">{tour.description}</p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+                            <span className="text-xs text-clay bg-cream/80 px-2 py-0.5 rounded-full">
+                              {'\u23F1\uFE0F'} {tour.default_duration_min} min
+                            </span>
+                            {meta.highlights.slice(0, 3).map(h => (
+                              <span key={h} className="text-xs text-clay">
+                                {'\u{1F4CD}'} {h}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div className="mt-2 ml-10 text-xs text-copper font-medium">
+                          {'\u2713'} Selected
+                        </div>
                       )}
-                      <p className="text-xs text-clay mt-2"> {tour.default_duration_min} min</p>
-                    </div>
-                    <span className="text-copper font-bold">{formatCurrency(tour.default_price)}/pp</span>
-                  </div>
-                </button>
-              ))}
-            </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
 
+            {/* Date & Time */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Date</label>
+                <label className="block text-sm font-medium text-charcoal mb-1">
+                  Date <span className="text-clay font-normal">/ Data</span>
+                </label>
                 <input
                   type="date"
                   min={today}
                   value={form.date}
                   onChange={e => handleChange('date', e.target.value)}
-                  className="w-full px-3 py-2 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper"
+                  className="w-full px-3 py-2.5 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Time</label>
+                <label className="block text-sm font-medium text-charcoal mb-1">
+                  Time <span className="text-clay font-normal">/ Hora</span>
+                </label>
                 <select
                   value={form.time}
                   onChange={e => handleChange('time', e.target.value)}
-                  className="w-full px-3 py-2 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper"
+                  className="w-full px-3 py-2.5 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper transition-colors"
                 >
-                  {['09:00','09:30','10:00','10:30','11:00','11:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00'].map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
+                  <optgroup label="Morning / Manh\u00e3">
+                    {timeSlots.filter(t => parseInt(t) < 12).map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Afternoon / Tarde">
+                    {timeSlots.filter(t => parseInt(t) >= 12).map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
             </div>
 
+            {/* Passengers */}
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Passengers</label>
+              <label className="block text-sm font-medium text-charcoal mb-1">
+                Passengers <span className="text-clay font-normal">/ Passageiros</span>
+              </label>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => form.pax > 1 && handleChange('pax', form.pax - 1)}
-                  className="w-10 h-10 rounded-full border border-cream flex items-center justify-center text-lg hover:bg-cream"
-                >-</button>
+                  className="w-10 h-10 rounded-full border-2 border-cream flex items-center justify-center text-lg font-bold hover:bg-cream hover:border-copper/30 transition-colors disabled:opacity-40"
+                  disabled={form.pax <= 1}
+                >
+                  -
+                </button>
                 <span className="text-xl font-bold text-charcoal w-8 text-center">{form.pax}</span>
                 <button
                   onClick={() => form.pax < 6 && handleChange('pax', form.pax + 1)}
-                  className="w-10 h-10 rounded-full border border-cream flex items-center justify-center text-lg hover:bg-cream"
-                >+</button>
+                  className="w-10 h-10 rounded-full border-2 border-cream flex items-center justify-center text-lg font-bold hover:bg-cream hover:border-copper/30 transition-colors disabled:opacity-40"
+                  disabled={form.pax >= 6}
+                >
+                  +
+                </button>
+                <span className="text-sm text-clay ml-1">(max 6)</span>
               </div>
             </div>
 
+            {/* Price summary */}
             {selectedTour && (
-              <div className="bg-copper/10 rounded-xl p-4 text-center">
-                <p className="text-sm text-clay">Total</p>
+              <div className="bg-copper/10 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-clay">Total</p>
+                  <p className="text-xs text-clay">
+                    {form.pax} {form.pax === 1 ? 'person' : 'people'} x {formatCurrency(selectedTour.default_price)}
+                  </p>
+                </div>
                 <p className="text-2xl font-bold text-copper">{formatCurrency(totalPrice)}</p>
-                <p className="text-xs text-clay">{form.pax} x {formatCurrency(selectedTour.default_price)}</p>
               </div>
             )}
 
             <button
               onClick={handleNextStep}
-              className="w-full py-3 bg-copper text-white font-semibold rounded-xl hover:bg-copper/90 transition-colors"
+              disabled={tours.length === 0}
+              className="w-full py-3.5 bg-copper text-white font-semibold rounded-xl hover:bg-copper/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
             >
-              Continue
+              Continue {'\u2192'}
             </button>
           </div>
         )}
@@ -274,75 +402,104 @@ export function BookingWidget() {
         {/* Step 2: Your Details */}
         {step === 2 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-charcoal">Your details</h2>
+            <h2 className="text-lg font-bold text-charcoal">
+              Your details <span className="text-clay font-normal text-sm">/ Os seus dados</span>
+            </h2>
+
+            {/* Tour summary mini-card */}
+            {selectedTour && (
+              <div className="bg-white rounded-xl p-3 border border-cream flex items-center gap-3">
+                <span className="text-2xl">{getTourMeta(selectedTour.name).emoji}</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-charcoal text-sm">{selectedTour.name}</p>
+                  <p className="text-xs text-clay">
+                    {form.date} {'\u00B7'} {form.time} {'\u00B7'} {form.pax} pax
+                  </p>
+                </div>
+                <p className="font-bold text-copper">{formatCurrency(totalPrice)}</p>
+              </div>
+            )}
 
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Full name *</label>
+              <label className="block text-sm font-medium text-charcoal mb-1">
+                Full name / Nome completo <span className="text-red-400">*</span>
+              </label>
               <input
                 type="text"
                 value={form.customer_name}
                 onChange={e => handleChange('customer_name', e.target.value)}
                 placeholder="John Smith"
-                className="w-full px-3 py-2 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper"
+                className="w-full px-3 py-2.5 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Email</label>
+              <label className="block text-sm font-medium text-charcoal mb-1">
+                Email
+              </label>
               <input
                 type="email"
                 value={form.customer_email}
                 onChange={e => handleChange('customer_email', e.target.value)}
                 placeholder="john@example.com"
-                className="w-full px-3 py-2 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper"
+                className="w-full px-3 py-2.5 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Phone (WhatsApp)</label>
+              <label className="block text-sm font-medium text-charcoal mb-1">
+                Phone / WhatsApp
+              </label>
               <input
                 type="tel"
                 value={form.customer_phone}
                 onChange={e => handleChange('customer_phone', e.target.value)}
                 placeholder="+44 7700 900123"
-                className="w-full px-3 py-2 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper"
+                className="w-full px-3 py-2.5 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper transition-colors"
               />
+              <p className="text-xs text-clay mt-1">
+                {'\u{1F4AC}'} We'll send your booking confirmation via WhatsApp
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Pickup location</label>
+              <label className="block text-sm font-medium text-charcoal mb-1">
+                Pickup location / Local de recolha
+              </label>
               <input
                 type="text"
                 value={form.pickup_location}
                 onChange={e => handleChange('pickup_location', e.target.value)}
                 placeholder="Hotel name or address"
-                className="w-full px-3 py-2 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper"
+                className="w-full px-3 py-2.5 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Notes (optional)</label>
+              <label className="block text-sm font-medium text-charcoal mb-1">
+                Notes / Notas <span className="text-clay font-normal">(optional)</span>
+              </label>
               <textarea
                 value={form.notes}
                 onChange={e => handleChange('notes', e.target.value)}
-                placeholder="Any special requests?"
+                placeholder="Any special requests? / Algum pedido especial?"
                 rows={2}
-                className="w-full px-3 py-2 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper resize-none"
+                className="w-full px-3 py-2.5 border border-cream rounded-xl bg-white focus:ring-2 focus:ring-copper/20 focus:border-copper transition-colors resize-none"
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 pt-1">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 py-3 border border-cream text-clay font-semibold rounded-xl hover:bg-cream transition-colors"
+                className="flex-1 py-3 border-2 border-cream text-clay font-semibold rounded-xl hover:bg-cream transition-colors"
               >
-                Back
+                {'\u2190'} Back
               </button>
               <button
                 onClick={handleNextStep}
                 className="flex-1 py-3 bg-copper text-white font-semibold rounded-xl hover:bg-copper/90 transition-colors"
               >
-                Review booking
+                Review {'\u2192'}
               </button>
             </div>
           </div>
@@ -351,56 +508,70 @@ export function BookingWidget() {
         {/* Step 3: Confirm & Pay */}
         {step === 3 && selectedTour && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-charcoal">Confirm & Pay</h2>
+            <h2 className="text-lg font-bold text-charcoal">
+              Confirm & Pay <span className="text-clay font-normal text-sm">/ Confirmar e Pagar</span>
+            </h2>
 
-            <div className="bg-white rounded-xl p-4 space-y-3 border border-cream">
-              <div className="flex justify-between">
-                <span className="text-clay">Tour</span>
-                <span className="font-semibold text-charcoal">{selectedTour.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-clay">Date</span>
-                <span className="font-semibold text-charcoal">{form.date}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-clay">Time</span>
-                <span className="font-semibold text-charcoal">{form.time}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-clay">Passengers</span>
-                <span className="font-semibold text-charcoal">{form.pax}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-clay">Duration</span>
-                <span className="font-semibold text-charcoal">{selectedTour.default_duration_min} min</span>
-              </div>
-              {form.pickup_location && (
-                <div className="flex justify-between">
-                  <span className="text-clay">Pickup</span>
-                  <span className="font-semibold text-charcoal">{form.pickup_location}</span>
+            <div className="bg-white rounded-xl p-5 space-y-3 border border-cream">
+              <div className="flex items-center gap-3 pb-3 border-b border-cream">
+                <span className="text-3xl">{getTourMeta(selectedTour.name).emoji}</span>
+                <div>
+                  <h3 className="font-bold text-charcoal">{selectedTour.name}</h3>
+                  <p className="text-sm text-clay">{selectedTour.default_duration_min} min tour</p>
                 </div>
-              )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-y-2 text-sm">
+                <span className="text-clay">{'\u{1F4C5}'} Date</span>
+                <span className="font-semibold text-charcoal text-right">{form.date}</span>
+
+                <span className="text-clay">{'\u{1F552}'} Time</span>
+                <span className="font-semibold text-charcoal text-right">{form.time}</span>
+
+                <span className="text-clay">{'\u{1F465}'} Passengers</span>
+                <span className="font-semibold text-charcoal text-right">{form.pax}</span>
+
+                {form.pickup_location && (
+                  <>
+                    <span className="text-clay">{'\u{1F4CD}'} Pickup</span>
+                    <span className="font-semibold text-charcoal text-right">{form.pickup_location}</span>
+                  </>
+                )}
+              </div>
+
               <hr className="border-cream" />
-              <div className="flex justify-between">
-                <span className="text-clay">Name</span>
-                <span className="font-semibold text-charcoal">{form.customer_name}</span>
+
+              <div className="grid grid-cols-2 gap-y-2 text-sm">
+                <span className="text-clay">{'\u{1F464}'} Name</span>
+                <span className="font-semibold text-charcoal text-right">{form.customer_name}</span>
+
+                {form.customer_email && (
+                  <>
+                    <span className="text-clay">{'\u2709\uFE0F'} Email</span>
+                    <span className="font-semibold text-charcoal text-right">{form.customer_email}</span>
+                  </>
+                )}
+
+                {form.customer_phone && (
+                  <>
+                    <span className="text-clay">{'\u{1F4F1}'} Phone</span>
+                    <span className="font-semibold text-charcoal text-right">{form.customer_phone}</span>
+                  </>
+                )}
               </div>
-              {form.customer_email && (
-                <div className="flex justify-between">
-                  <span className="text-clay">Email</span>
-                  <span className="font-semibold text-charcoal">{form.customer_email}</span>
-                </div>
-              )}
-              {form.customer_phone && (
-                <div className="flex justify-between">
-                  <span className="text-clay">Phone</span>
-                  <span className="font-semibold text-charcoal">{form.customer_phone}</span>
-                </div>
-              )}
+
               <hr className="border-cream" />
-              <div className="flex justify-between text-lg">
-                <span className="font-bold text-charcoal">Total</span>
-                <span className="font-bold text-copper">{formatCurrency(totalPrice)}</span>
+
+              <div className="flex justify-between items-center pt-1">
+                <div>
+                  <span className="text-sm text-clay">
+                    {form.pax} x {formatCurrency(selectedTour.default_price)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-clay">Total</p>
+                  <p className="text-2xl font-bold text-copper">{formatCurrency(totalPrice)}</p>
+                </div>
               </div>
             </div>
 
@@ -408,21 +579,28 @@ export function BookingWidget() {
               <button
                 onClick={() => setStep(2)}
                 disabled={submitting}
-                className="flex-1 py-3 border border-cream text-clay font-semibold rounded-xl hover:bg-cream transition-colors disabled:opacity-50"
+                className="flex-1 py-3 border-2 border-cream text-clay font-semibold rounded-xl hover:bg-cream transition-colors disabled:opacity-50"
               >
-                Back
+                {'\u2190'} Back
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="flex-1 py-3 bg-copper text-white font-semibold rounded-xl hover:bg-copper/90 transition-colors disabled:opacity-50"
+                className="flex-1 py-3.5 bg-copper text-white font-semibold rounded-xl hover:bg-copper/90 transition-colors disabled:opacity-50"
               >
-                {submitting ? 'Processing...' : `Pay ${formatCurrency(totalPrice)}`}
+                {submitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing...
+                  </span>
+                ) : (
+                  `Pay ${formatCurrency(totalPrice)} \u{1F512}`
+                )}
               </button>
             </div>
 
             <p className="text-xs text-clay text-center">
-              Secure payment powered by Stripe. You will be redirected to complete payment.
+              {'\u{1F512}'} Secure payment powered by Stripe. You will be redirected to complete payment.
             </p>
           </div>
         )}
@@ -430,8 +608,13 @@ export function BookingWidget() {
 
       {/* Footer */}
       <div className="max-w-lg mx-auto px-4 py-6 text-center">
-        <p className="text-xs text-clay">Powered by Tuk an App © {new Date().getFullYear()}</p>
+        <a href="/" className="text-xs text-clay hover:text-copper transition-colors">
+          {'\u2190'} tukanapp.pt
+        </a>
+        <p className="text-xs text-clay mt-1">
+          Powered by Tuk an App {'\u00A9'} {new Date().getFullYear()}
+        </p>
       </div>
     </div>
   )
-          }
+}
