@@ -169,7 +169,7 @@ export const TukTukDetailPage: React.FC = () => {
         </button>
 
         <div className="flex items-center gap-4">
-          <div className="text-6xl">🛺</div>
+          <div className="text-6xl"></div>
           <div>
             <h1 className="text-3xl font-bold text-ink">{tuktuk.nickname}</h1>
             <p className="text-ink2">Matrícula: {tuktuk.plate} · {tuktuk.color}</p>
