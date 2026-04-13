@@ -37,10 +37,10 @@ export const LoginPage: React.FC = () => {
           <h1 className="mt-16 text-4xl font-extrabold text-white leading-tight">
             Gere a tua frota<br />
             <span className="text-yellow">de TukTuks</span><br />
-            num so lugar.
+            num só lugar.
           </h1>
           <p className="mt-6 text-lg text-white/60 max-w-md leading-relaxed">
-            Reservas, motoristas, pagamentos e relatorios — tudo o que precisas para fazer crescer o teu negocio de TukTuks.
+            Reservas, motoristas, pagamentos e relatórios — tudo o que precisas para fazer crescer o teu negócio de TukTuks.
           </p>
         </div>
 
@@ -121,14 +121,14 @@ export const LoginPage: React.FC = () => {
           </form>
 
           <p className="mt-8 text-center text-sm text-ink2">
-            Ainda nao tens conta?{' '}
+            Ainda não tens conta?{' '}
             <Link to="/signup" className="font-semibold text-copper hover:text-copper/80 transition-colors">
               Criar conta
             </Link>
           </p>
 
           <p className="mt-4 text-center text-sm text-ink2">
-            Es motorista?{' '}
+            És motorista?{' '}
             <Link to="/join" className="font-semibold text-copper hover:text-copper/80 transition-colors">
               Entrar como motorista
             </Link>
