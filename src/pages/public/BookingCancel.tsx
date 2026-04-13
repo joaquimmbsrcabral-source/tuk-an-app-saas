@@ -5,7 +5,7 @@ export function BookingCancel() {
   return (
     <div className="min-h-screen bg-cream flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
-        <div className="text-6xl mb-4">\u{1F614}</div>
+        <div className="text-6xl mb-4"></div>
         <h1 className="text-2xl font-bold text-ink mb-2">Payment cancelled</h1>
         <p className="text-ink2 mb-6">
           No worries! Your booking has not been charged. You can try again whenever you're ready.
