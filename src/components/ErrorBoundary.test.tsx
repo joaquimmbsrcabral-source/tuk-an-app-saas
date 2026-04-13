@@ -99,6 +99,6 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(screen.getByText(/🛺💨/)).toBeInTheDocument()
+    expect(screen.getByText(/Algo correu mal/)).toBeInTheDocument()
   })
 })
