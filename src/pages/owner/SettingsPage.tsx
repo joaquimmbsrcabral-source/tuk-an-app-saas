@@ -8,7 +8,7 @@ import { Input, TextArea } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { Modal } from '../../components/Modal'
 import { TourCatalogItem } from '../../lib/types'
-import { Plus, Trash2, Edit2 } from 'lucide-react'
+import { Plus, Trash2, Edit2, Map } from 'lucide-react'
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useAuth()
@@ -171,7 +171,7 @@ export const SettingsPage: React.FC = () => {
 
           {tours.length === 0 ? (
             <EmptyState
-              icon="🗺️"
+              icon={<Map size={24} />}
               title="Sem tours no catálogo"
               description="Adiciona o primeiro tour para começar a usar preços padrão nas reservas."
               action={{ label: 'Adicionar Tour', onClick: openNewTour }}
