@@ -361,7 +361,7 @@ export const SupportPage: React.FC = () => {
             ) : (
               <div className="flex-1 flex items-center justify-center">
                 <EmptyState
-                  icon="💬"
+                  icon={<MessageCircle size={24} />}
                   title="Selecione uma conversa"
                   description="Escolha uma conversa da lista para ver as mensagens"
                 />
