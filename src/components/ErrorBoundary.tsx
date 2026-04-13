@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react'
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { Button } from './Button'
 
@@ -38,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen bg-cream flex items-center justify-center p-6">
           <div className="bg-card border border-line rounded-2xl shadow-card p-8 max-w-md w-full text-center">
-            <div className="text-4xl mb-4">🛺💨</div>
+            <div className="text-4xl mb-4"></div>
             <h2 className="text-xl font-bold text-ink mb-2">Algo correu mal</h2>
             <p className="text-sm text-ink2 mb-6">
               Ocorreu um erro inesperado. Tenta recarregar a página ou contacta o suporte se o problema persistir.
