@@ -66,7 +66,7 @@ const testimonials = [
   {
     name: 'Maria Santos',
     company: 'Porto Adventures',
-    text: 'As reservas online triplicaram desde que instalámos o widget no site. Os clientes adoram a facilidade de marcar e pagar.',
+    text: 'As reservas online triplicaram desde que instalámos o widget no site. Os clientes adoram a fácilidade de marcar e pagar.',
     rating: 5,
   },
   {
