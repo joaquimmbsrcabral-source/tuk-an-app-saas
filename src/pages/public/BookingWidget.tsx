@@ -146,7 +146,7 @@ export function BookingWidget() {
     return (
       <div className="min-h-screen bg-sand flex items-center justify-center">
         <div className="text-center">
-          <div className="text-5xl mb-4">\u{1F6FA}</div>
+          <div className="text-5xl mb-4"></div>
           <p className="text-clay">Loading tours...</p>
         </div>
       </div>
@@ -158,7 +158,7 @@ export function BookingWidget() {
       {/* Header */}
       <div className="bg-charcoal text-white py-6">
         <div className="max-w-lg mx-auto px-4 text-center">
-          <h1 className="text-2xl font-bold">\u{1F6FA} Tuk & Roll</h1>
+          <h1 className="text-2xl font-bold"> Tuk & Roll</h1>
           <p className="text-sm text-sand/80 mt-1">Book your Lisbon TukTuk tour</p>
         </div>
       </div>
