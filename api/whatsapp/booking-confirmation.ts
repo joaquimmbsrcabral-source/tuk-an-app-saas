@@ -24,13 +24,38 @@ function buildMessage(data: WhatsAppRequest): string {
   const lang = data.language || 'pt'
 
   if (lang === 'en') {
+
+// Twilio WhatsApp API integration for booking confirmations
+// Uses the Twilio REST API directly (no SDK needed)
+
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!
+const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886' // Twilio sandbox default
+
+interface WhatsAppRequest {
+  to: string // Customer phone number (with country code)
+  customerName: string
+  tourName: string
+  date: string
+  time: string
+  passengers: number
+  totalPaid: number
+  bookingRef: string
+  pickupLocation?: string
+  language?: 'pt' | 'en'
+}
+
+function buildMessage(data: WhatsAppRequest): string {
+  const lang = data.language || 'pt'
+
+  if (lang === 'en') {
     return [
-      `🛺 *Booking Confirmed!* 🎉`,
+      ` *Booking Confirmed!* `,
       ``,
       `Hello ${data.customerName}!`,
       `Your Tuk & Roll tour is booked and paid.`,
       ``,
-      `📋 *Booking Details:*`,
+      ` *Booking Details:*`,
       `• Tour: ${data.tourName}`,
       `• Date: ${data.date}`,
       `• Time: ${data.time}`,
@@ -39,22 +64,22 @@ function buildMessage(data: WhatsAppRequest): string {
       `• Ref: ${data.bookingRef}`,
       data.pickupLocation ? `• Pickup: ${data.pickupLocation}` : '',
       ``,
-      `📍 Please be at the pickup point 5 minutes early.`,
+      ` Please be at the pickup point 5 minutes early.`,
       ``,
       `Questions? Reply to this message or call us.`,
       ``,
-      `_Tuk & Roll — Lisbon TukTuk Tours_ 🇵🇹`,
+      `_Tuk & Roll — Lisbon TukTuk Tours_ `,
     ].filter(Boolean).join('\n')
   }
 
   // Portuguese (default)
   return [
-    `🛺 *Reserva Confirmada!* 🎉`,
+    ` *Reserva Confirmada!* `,
     ``,
     `Olá ${data.customerName}!`,
     `O seu tour Tuk & Roll está reservado e pago.`,
     ``,
-    `📋 *Detalhes da Reserva:*`,
+    ` *Detalhes da Reserva:*`,
     `• Tour: ${data.tourName}`,
     `• Data: ${data.date}`,
     `• Hora: ${data.time}`,
@@ -63,11 +88,11 @@ function buildMessage(data: WhatsAppRequest): string {
     `• Ref: ${data.bookingRef}`,
     data.pickupLocation ? `• Ponto de encontro: ${data.pickupLocation}` : '',
     ``,
-    `📍 Por favor esteja no ponto de encontro 5 minutos antes.`,
+    ` Por favor esteja no ponto de encontro 5 minutos antes.`,
     ``,
     `Questões? Responda a esta mensagem ou ligue-nos.`,
     ``,
-    `_Tuk & Roll — Passeios de TukTuk em Lisboa_ 🇵🇹`,
+    `_Tuk & Roll — Passeios de TukTuk em Lisboa_ `,
   ].filter(Boolean).join('\n')
 }
 
