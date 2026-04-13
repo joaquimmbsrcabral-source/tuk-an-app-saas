@@ -19,7 +19,7 @@ import {
   isToday,
 } from 'date-fns'
 import { pt as ptPT } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, User } from 'lucide-react'
 
 const DAY_HEADERS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
@@ -159,7 +159,7 @@ export const OwnerSchedulePage: React.FC = () => {
         {!loading && drivers.length === 0 ? (
           <Card>
             <div className="flex flex-col items-center py-10 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-cream border border-line flex items-center justify-center text-3xl mb-4 shadow-card">👤</div>
+              <div className="w-16 h-16 rounded-2xl bg-cream border border-line flex items-center justify-center mb-4 shadow-card"><User size={28} className="text-ink" /></div>
               <h3 className="font-bold text-ink mb-1">Sem motoristas ainda</h3>
               <p className="text-sm text-ink2 max-w-xs">Convida motoristas primeiro na página Motoristas para os poderes escalar.</p>
             </div>
