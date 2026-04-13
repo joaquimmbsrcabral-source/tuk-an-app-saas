@@ -32,7 +32,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           }`}
           title="Português"
         >
-          🇵🇹 PT
+          PT PT
         </button>
         <button
           onClick={() => i18n.changeLanguage('en')}
@@ -43,7 +43,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           }`}
           title="English"
         >
-          🇬🇧 EN
+          EN EN
         </button>
       </div>
     )
