@@ -9,7 +9,7 @@ import { Input } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { Profile } from '../../lib/types'
 import { formatCurrency } from '../../lib/format'
-import { Plus, Trash2, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, ChevronRight, UserPlus } from 'lucide-react'
 
 export const DriversPage: React.FC = () => {
   const { profile } = useAuth()
@@ -71,7 +71,7 @@ export const DriversPage: React.FC = () => {
         </div>
 
         {drivers.length === 0 ? (
-          <EmptyState icon="👤" title="Nenhum Motorista" description="Convide motoristas para sua equipa" action={{ label: 'Convidar Motorista', onClick: () => setIsModalOpen(true) }} />
+          <EmptyState icon={<UserPlus size={24} />} title="Nenhum Motorista" description="Convide motoristas para sua equipa" action={{ label: 'Convidar Motorista', onClick: () => setIsModalOpen(true) }} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {drivers.map((driver) => (
