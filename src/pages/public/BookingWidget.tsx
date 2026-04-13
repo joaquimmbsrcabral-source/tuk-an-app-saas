@@ -206,7 +206,7 @@ export function BookingWidget() {
                       {tour.description && (
                         <p className="text-sm text-clay mt-1">{tour.description}</p>
                       )}
-                      <p className="text-xs text-clay mt-2">\u{23F1} {tour.default_duration_min} min</p>
+                      <p className="text-xs text-clay mt-2"> {tour.default_duration_min} min</p>
                     </div>
                     <span className="text-copper font-bold">{formatCurrency(tour.default_price)}/pp</span>
                   </div>
@@ -430,7 +430,7 @@ export function BookingWidget() {
 
       {/* Footer */}
       <div className="max-w-lg mx-auto px-4 py-6 text-center">
-        <p className="text-xs text-clay">Powered by Tuk an App \u{00A9} {new Date().getFullYear()}</p>
+        <p className="text-xs text-clay">Powered by Tuk an App © {new Date().getFullYear()}</p>
       </div>
     </div>
   )
