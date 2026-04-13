@@ -145,33 +145,33 @@ ${JSON.stringify(reportData, null, 2)}
 
 Gera o briefing matinal para o Joaquim (proprietário) em português europeu, usando exactamente este formato:
 
-Bom dia Joaquim! 🛺
+Bom dia Joaquim! 
 
-📅 HOJE — ${todayStr}
+ HOJE — ${todayStr}
 
-🎫 RESERVAS (${bookingCount} tours)
+ RESERVAS (${bookingCount} tours)
 [lista detalhada ou "Nenhuma reserva para hoje."]
 [alertas: reservas sem motorista/tuktuk OU ✅ Sem alertas]
 
-👥 MOTORISTAS
+ MOTORISTAS
 [resumo: quantos em serviço, quantos disponíveis]
 [alertas ou ✅ Sem alertas]
 
-🔧 FROTA
+ FROTA
 [resumo: activos vs inactivos]
 [alertas de manutenção/seguro ou ✅ Sem alertas]
 
-💰 FINANÇAS
+ FINANÇAS
 • Receita esperada hoje: €${expectedRevenue.toFixed(2)}
 • Recebido ontem: €${yesterdayRevenue.toFixed(2)}
 [alertas de pendentes ou ✅ Sem pendentes]
 
-💡 3 SUGESTÕES DE MELHORIA
+ 3 SUGESTÕES DE MELHORIA
 1. [sugestão concreta e accionável baseada nos dados]
 2. [sugestão concreta e accionável baseada nos dados]
 3. [sugestão concreta e accionável baseada nos dados]
 
-Bom dia de trabalho! 💪${errors.length > 0 ? '\n\n---\n⚠️ Erros de recolha de dados: ' + errors.join(', ') : ''}`;
+Bom dia de trabalho! ${errors.length > 0 ? '\n\n---\n⚠️ Erros de recolha de dados: ' + errors.join(', ') : ''}`;
 
   let report = '';
   try {
@@ -214,14 +214,14 @@ Bom dia de trabalho! 💪${errors.length > 0 ? '\n\n---\n⚠️ Erros de recolha
         body: JSON.stringify({
           from: 'Tuk an App <agent@resend.dev>',
           to: ['joaquimmbsrcabral@gmail.com'],
-          subject: `🛺 Briefing Diário — ${todayStr}`,
+          subject: ` Briefing Diário — ${todayStr}`,
           text: report,
           html: `<!DOCTYPE html>
 <html lang="pt">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#1a1a1a;line-height:1.6;background:#f9fafb;">
   <div style="background:#f97316;border-radius:12px;padding:16px 24px;margin-bottom:24px;">
-    <h1 style="margin:0;color:white;font-size:20px;">🛺 Tuk an App — Briefing Diário</h1>
+    <h1 style="margin:0;color:white;font-size:20px;"> Tuk an App — Briefing Diário</h1>
     <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">${todayStr}</p>
   </div>
   <div style="background:white;border-radius:12px;padding:24px;white-space:pre-wrap;font-size:15px;">${htmlReport}</div>
