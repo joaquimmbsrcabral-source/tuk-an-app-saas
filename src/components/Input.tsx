@@ -19,9 +19,9 @@ export const Input: React.FC<InputProps> = ({ label, error, icon, className = ''
         className={`w-full ${icon ? 'pl-10' : 'px-4'} py-2.5 bg-white border ${
           error ? 'border-red-400 focus:ring-red-200' : 'border-line focus:ring-yellow/30 focus:border-yellow'
         } rounded-xl text-sm text-ink placeholder:text-muted/60 font-outfit
-        focus:outline-none focus:ring-2 transition-all duration-200
-        disabled:bg-gray-50 disabled:text-muted disabled:cursor-not-allowed
-        ${className}`}
+          focus:outline-none focus:ring-2 transition-all duration-200
+          disabled:bg-gray-50 disabled:text-muted disabled:cursor-not-allowed
+          ${className}`}
         {...props}
       />
     </div>
@@ -41,11 +41,38 @@ export const TextArea: React.FC<TextAreaProps> = ({ label, error, className = ''
       className={`w-full px-4 py-2.5 bg-white border ${
         error ? 'border-red-400 focus:ring-red-200' : 'border-line focus:ring-yellow/30 focus:border-yellow'
       } rounded-xl text-sm text-ink placeholder:text-muted/60 font-outfit
-      focus:outline-none focus:ring-2 transition-all duration-200 resize-none
-      disabled:bg-gray-50 disabled:text-muted disabled:cursor-not-allowed
-      ${className}`}
+        focus:outline-none focus:ring-2 transition-all duration-200 resize-none
+        disabled:bg-gray-50 disabled:text-muted disabled:cursor-not-allowed
+        ${className}`}
       {...props}
     />
     {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
   </div>
 )
+
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string
+  error?: string
+  options: { value: string; label: string }[]
+}
+
+export const Select: React.FC<SelectProps> = ({ label, error, options, className = '', ...props }) => (
+  <div>
+    {label && <label className="block text-sm font-medium text-ink mb-1.5">{label}</label>}
+    <select
+      className={`w-full px-4 py-2.5 bg-white border ${
+        error ? 'border-red-400 focus:ring-red-200' : 'border-line focus:ring-yellow/30 focus:border-yellow'
+      } rounded-xl text-sm text-ink placeholder:text-muted/60 font-outfit
+        focus:outline-none focus:ring-2 transition-all duration-200
+        disabled:bg-gray-50 disabled:text-muted disabled:cursor-not-allowed
+        ${className}`}
+      {...props}
+    >
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+    {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
+  </div>
+)
+
