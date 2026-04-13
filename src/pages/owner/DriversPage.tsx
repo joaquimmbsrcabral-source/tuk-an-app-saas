@@ -8,6 +8,7 @@ import { Modal } from '../../components/Modal'
 import { Input } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { Profile } from '../../lib/types'
+import { StatusBadge } from '../../components/StatusBadge'
 import { formatCurrency } from '../../lib/format'
 import { Plus, Trash2, ChevronRight, UserPlus } from 'lucide-react'
 
@@ -92,8 +93,7 @@ export const DriversPage: React.FC = () => {
                     <p className="text-sm text-ink2 truncate">{driver.phone}</p>
                     <p className="text-sm text-ink2">Bruto: {formatCurrency(commissions[driver.id] || 0)} · Comissão {driver.commission_pct || 0}%</p>
                     <div className="mt-1">
-                      <span className={`inline-block w-2 h-2 rounded-full mr-1 ${driver.status === 'available' ? 'bg-green' : driver.status === 'busy' ? 'bg-copper' : 'bg-ink2'}`}></span>
-                      <span className="text-xs text-ink2">{driver.status || 'offline'}</span>
+                      <StatusBadge status={driver.status || 'offline'} size="sm" />
                     </div>
                   </div>
                   <button onClick={(e) => handleDelete(e, driver.id)} className="text-copper p-1 opacity-0 group-hover:opacity-100 transition-opacity">
