@@ -7,7 +7,7 @@ import { EmptyState } from '../../components/EmptyState'
 import { Booking, Payment, StreetSale } from '../../lib/types'
 import { formatDate, formatCurrency, isThisMonthDate } from '../../lib/format'
 import { subDays } from 'date-fns'
-import { CheckCircle, ShoppingBag } from 'lucide-react'
+import { CheckCircle, ShoppingBag, ClipboardList } from 'lucide-react'
 
 export const HistoryPage: React.FC = () => {
   const { profile } = useAuth()
@@ -111,7 +111,7 @@ export const HistoryPage: React.FC = () => {
 
         {allActivity.length === 0 ? (
           <EmptyState
-            icon="📋"
+            icon={<ClipboardList size={24} />}
             title="Sem Atividade"
             description="Nenhuma atividade nos últimos 30 dias"
           />
