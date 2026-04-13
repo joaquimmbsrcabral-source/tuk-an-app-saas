@@ -1,4 +1,121 @@
-ntactSubmit = (e: React.FormEvent) => {
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Logo } from '../../components/Logo'
+import {
+  Zap, ArrowRight, Calendar, Users, BarChart3, Smartphone,
+  Shield, Globe, MapPin, Star, Check, Menu, X, ChevronUp,
+  ChevronDown, CheckCircle2
+} from 'lucide-react'
+
+const plans = [
+  {
+    name: 'Starter',
+    description: 'Para quem está a começar',
+    price: 29,
+    popular: false,
+    cta: 'Começar grátis',
+    features: [
+      'Até 3 TukTuks',
+      'Até 5 motoristas',
+      'Reservas online (widget)',
+      'Dashboard básico',
+      'Suporte por email',
+    ],
+  },
+  {
+    name: 'Professional',
+    description: 'Para operações em crescimento',
+    price: 59,
+    popular: true,
+    cta: 'Começar grátis',
+    features: [
+      'Até 10 TukTuks',
+      'Motoristas ilimitados',
+      'Reservas + vendas na rua',
+      'Dashboard completo com gráficos',
+      'Gestão de escala',
+      'Push notifications',
+      'Suporte prioritário',
+    ],
+  },
+  {
+    name: 'Enterprise',
+    description: 'Para grandes operadores',
+    price: 99,
+    popular: false,
+    cta: 'Falar com vendas',
+    features: [
+      'TukTuks ilimitados',
+      'Motoristas ilimitados',
+      'Tudo do Professional',
+      'API personalizada',
+      'Multi-empresa',
+      'Relatórios avançados',
+      'Account manager dedicado',
+    ],
+  },
+]
+
+const testimonials = [
+  {
+    name: 'António Silva',
+    company: 'Lisboa TukTuk Tours',
+    text: 'Finalmente uma plataforma feita para nós. Deixámos de usar Excel e WhatsApp para gerir tudo. A equipa adora a app de motorista.',
+    rating: 5,
+  },
+  {
+    name: 'Maria Santos',
+    company: 'Porto Adventures',
+    text: 'As reservas online triplicaram desde que instalámos o widget no site. Os clientes adoram a facilidade de marcar e pagar.',
+    rating: 5,
+  },
+  {
+    name: 'João Costa',
+    company: 'Algarve Rides',
+    text: 'O dashboard em tempo real é fantástico. Sei exatamente quanto cada motorista e TukTuk faturam por dia. Recomendo a 100%.',
+    rating: 5,
+  },
+]
+
+const faqs = [
+  {
+    q: 'Preciso de instalar alguma app?',
+    a: 'Não! O Tuk an App é uma Progressive Web App (PWA). Funciona diretamente no browser do telemóvel ou computador. Sem downloads, sem atualizações manuais.',
+  },
+  {
+    q: 'Quanto tempo demora a configurar?',
+    a: 'Menos de 15 minutos. Crias a conta, adicionas os teus TukTuks e convidas os motoristas. Eles recebem um link e estão prontos.',
+  },
+  {
+    q: 'E se eu já tiver um site?',
+    a: 'Perfeito! O nosso widget de reservas integra-se em qualquer site com um simples código. Instalação em menos de 5 minutos.',
+  },
+  {
+    q: 'Os dados estão seguros?',
+    a: 'Sim. Usamos Supabase (PostgreSQL) com encriptação, autenticação segura e backups automáticos. Os pagamentos são processados via Stripe.',
+  },
+  {
+    q: 'Posso cancelar a qualquer momento?',
+    a: 'Claro. Sem fidelização, sem letras pequenas. Cancelas quando quiseres e os teus dados ficam disponíveis para exportação.',
+  },
+  {
+    q: 'Têm suporte em Português?',
+    a: 'Sim! A plataforma é 100% em Português e o suporte é feito por uma equipa portuguesa. Também temos interface em Inglês.',
+  },
+]
+
+export const LandingPage: React.FC = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [contactSent, setContactSent] = useState(false)
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    company: '',
+    message: '',
+  })
+
+  const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setContactSent(true)
   }
@@ -47,9 +164,11 @@ ntactSubmit = (e: React.FormEvent) => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 text-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow/5 via-transparent to-copper/5 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 text-center relative">
           <div className="inline-flex items-center gap-2 bg-yellow/20 text-ink px-4 py-1.5 rounded-full text-sm font-semibold mb-6">
-            <Zap size={14} /> 14 dias grátis — sem cartão de crédito
+            <Zap size={14} />
+            14 dias grátis — sem cartão de crédito
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-ink leading-tight max-w-4xl mx-auto">
             Gestão de TukTuks.<br />
@@ -59,10 +178,16 @@ ntactSubmit = (e: React.FormEvent) => {
             Reservas online, gestão de frota, pagamentos e comunicação com motoristas — tudo numa só plataforma feita para operadores de TukTuk.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/signup" className="w-full sm:w-auto bg-yellow text-ink font-bold px-8 py-4 rounded-2xl text-lg hover:bg-yellow/90 transition-all shadow-lg shadow-yellow/30 flex items-center justify-center gap-2">
+            <Link
+              to="/signup"
+              className="w-full sm:w-auto bg-yellow text-ink font-bold px-8 py-4 rounded-2xl text-lg hover:bg-yellow/90 transition-all shadow-lg shadow-yellow/30 flex items-center justify-center gap-2"
+            >
               Começar grátis <ArrowRight size={20} />
             </Link>
-            <a href="#demo" className="w-full sm:w-auto border-2 border-ink text-ink font-bold px-8 py-4 rounded-2xl text-lg hover:bg-ink hover:text-white transition-all flex items-center justify-center gap-2">
+            <a
+              href="#demo"
+              className="w-full sm:w-auto border-2 border-ink text-ink font-bold px-8 py-4 rounded-2xl text-lg hover:bg-ink hover:text-white transition-all flex items-center justify-center gap-2"
+            >
               Ver demo
             </a>
           </div>
@@ -110,7 +235,12 @@ ntactSubmit = (e: React.FormEvent) => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {plans.map((plan, i) => (
-              <div key={i} className={`relative bg-white rounded-2xl p-8 border-2 ${plan.popular ? 'border-yellow shadow-xl shadow-yellow/10 scale-105' : 'border-line'} transition-all`}>
+              <div
+                key={i}
+                className={`relative bg-white rounded-2xl p-8 border-2 ${
+                  plan.popular ? 'border-yellow shadow-xl shadow-yellow/10 scale-105' : 'border-line'
+                } transition-all`}
+              >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow text-ink text-xs font-bold px-4 py-1 rounded-full">
                     Mais popular
@@ -122,7 +252,14 @@ ntactSubmit = (e: React.FormEvent) => {
                   <span className="text-4xl font-black text-ink">{plan.price}€</span>
                   <span className="text-sm text-ink2">/mês</span>
                 </div>
-                <Link to="/signup" className={`mt-6 block text-center font-bold py-3 rounded-xl transition-all ${plan.popular ? 'bg-yellow text-ink hover:bg-yellow/90 shadow-lg shadow-yellow/20' : 'bg-ink text-white hover:bg-ink/90'}`}>
+                <Link
+                  to="/signup"
+                  className={`mt-6 block text-center font-bold py-3 rounded-xl transition-all ${
+                    plan.popular
+                      ? 'bg-yellow text-ink hover:bg-yellow/90 shadow-lg shadow-yellow/20'
+                      : 'bg-ink text-white hover:bg-ink/90'
+                  }`}
+                >
                   {plan.cta}
                 </Link>
                 <ul className="mt-6 space-y-3">
@@ -173,7 +310,10 @@ ntactSubmit = (e: React.FormEvent) => {
           <div className="space-y-3">
             {faqs.map((faq, i) => (
               <div key={i} className="bg-white rounded-xl border border-line overflow-hidden">
-                <button className="w-full flex items-center justify-between px-6 py-4 text-left" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                <button
+                  className="w-full flex items-center justify-between px-6 py-4 text-left"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                >
                   <span className="text-sm font-semibold text-ink">{faq.q}</span>
                   {openFaq === i ? <ChevronUp size={18} className="text-ink2" /> : <ChevronDown size={18} className="text-ink2" />}
                 </button>
@@ -197,7 +337,9 @@ ntactSubmit = (e: React.FormEvent) => {
           </div>
           {contactSent ? (
             <div className="text-center bg-green/10 rounded-2xl p-8 border border-green/20">
-              <div className="text-4xl mb-4">✅</div>
+              <div className="w-14 h-14 rounded-full bg-green/20 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 size={28} className="text-green" />
+              </div>
               <h3 className="text-xl font-bold text-ink mb-2">Mensagem enviada!</h3>
               <p className="text-sm text-ink2">Respondemos em menos de 24 horas.</p>
             </div>
@@ -206,22 +348,52 @@ ntactSubmit = (e: React.FormEvent) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">Nome</label>
-                  <input type="text" required className="w-full px-4 py-3 rounded-xl border border-line bg-cream text-ink focus:outline-none focus:ring-2 focus:ring-yellow/50 focus:border-yellow" placeholder="O teu nome" value={contactForm.name} onChange={e => setContactForm({...contactForm, name: e.target.value})} />
+                  <input
+                    type="text"
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-line bg-cream text-ink focus:outline-none focus:ring-2 focus:ring-yellow/50 focus:border-yellow"
+                    placeholder="O teu nome"
+                    value={contactForm.name}
+                    onChange={e => setContactForm({...contactForm, name: e.target.value})}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">Email</label>
-                  <input type="email" required className="w-full px-4 py-3 rounded-xl border border-line bg-cream text-ink focus:outline-none focus:ring-2 focus:ring-yellow/50 focus:border-yellow" placeholder="email@empresa.pt" value={contactForm.email} onChange={e => setContactForm({...contactForm, email: e.target.value})} />
+                  <input
+                    type="email"
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-line bg-cream text-ink focus:outline-none focus:ring-2 focus:ring-yellow/50 focus:border-yellow"
+                    placeholder="email@empresa.pt"
+                    value={contactForm.email}
+                    onChange={e => setContactForm({...contactForm, email: e.target.value})}
+                  />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-ink mb-1.5">Empresa</label>
-                <input type="text" className="w-full px-4 py-3 rounded-xl border border-line bg-cream text-ink focus:outline-none focus:ring-2 focus:ring-yellow/50 focus:border-yellow" placeholder="Nome da tua empresa de TukTuks" value={contactForm.company} onChange={e => setContactForm({...contactForm, company: e.target.value})} />
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 rounded-xl border border-line bg-cream text-ink focus:outline-none focus:ring-2 focus:ring-yellow/50 focus:border-yellow"
+                  placeholder="Nome da tua empresa de TukTuks"
+                  value={contactForm.company}
+                  onChange={e => setContactForm({...contactForm, company: e.target.value})}
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-ink mb-1.5">Mensagem</label>
-                <textarea required rows={4} className="w-full px-4 py-3 rounded-xl border border-line bg-cream text-ink focus:outline-none focus:ring-2 focus:ring-yellow/50 focus:border-yellow resize-none" placeholder="Como te podemos ajudar?" value={contactForm.message} onChange={e => setContactForm({...contactForm, message: e.target.value})} />
+                <textarea
+                  required
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl border border-line bg-cream text-ink focus:outline-none focus:ring-2 focus:ring-yellow/50 focus:border-yellow resize-none"
+                  placeholder="Como te podemos ajudar?"
+                  value={contactForm.message}
+                  onChange={e => setContactForm({...contactForm, message: e.target.value})}
+                />
               </div>
-              <button type="submit" className="w-full bg-yellow text-ink font-bold py-4 rounded-xl text-lg hover:bg-yellow/90 transition-all shadow-lg shadow-yellow/20">
+              <button
+                type="submit"
+                className="w-full bg-yellow text-ink font-bold py-4 rounded-xl text-lg hover:bg-yellow/90 transition-all shadow-lg shadow-yellow/20"
+              >
                 Enviar mensagem
               </button>
             </form>
@@ -234,11 +406,8 @@ ntactSubmit = (e: React.FormEvent) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-yellow flex items-center justify-center text-ink font-black text-sm">T</div>
-                <span className="font-black text-lg">Tuk an App</span>
-              </div>
-              <p className="text-sm text-white/60 max-w-sm leading-relaxed">
+              <Logo variant="light" />
+              <p className="text-sm text-white/60 max-w-sm leading-relaxed mt-4">
                 A plataforma de gestão feita para operadores de TukTuk em Portugal. Reservas, frota, motoristas e pagamentos — tudo num só lugar.
               </p>
             </div>
@@ -262,7 +431,7 @@ ntactSubmit = (e: React.FormEvent) => {
           </div>
           <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-white/40">© 2026 Tuk an App. Todos os direitos reservados.</p>
-            <p className="text-sm text-white/40">Feito com 🛺 em Lisboa</p>
+            <p className="text-sm text-white/40">Feito com ❤️ em Lisboa</p>
           </div>
         </div>
       </footer>
