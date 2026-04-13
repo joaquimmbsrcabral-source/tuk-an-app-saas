@@ -43,10 +43,10 @@ export const SignupPage: React.FC = () => {
         setCodeValid(true)
         setInviteId(data.id)
       } else {
-        setError(data?.used ? 'Este codigo ja foi utilizado' : 'Codigo de convite invalido')
+        setError(data?.used ? 'Este código já foi utilizado' : 'Código de convite inválido')
       }
     } catch {
-      setError('Erro ao validar codigo')
+      setError('Erro ao validar código')
     } finally {
       setCodeChecking(false)
     }
@@ -54,7 +54,7 @@ export const SignupPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!codeValid) { setError('Introduz um codigo de convite valido'); return }
+    if (!codeValid) { setError('Introduz um código de convite válido'); return }
     setError('')
     setLoading(true)
     try {
@@ -82,12 +82,12 @@ export const SignupPage: React.FC = () => {
         <div className="relative z-10">
           <Logo variant="light" size="lg" />
           <h1 className="mt-16 text-4xl font-extrabold text-white leading-tight">
-            Comeca a gerir<br />
-            <span className="text-yellow">o teu negocio</span><br />
+            Começa a gerir<br />
+            <span className="text-yellow">o teu negócio</span><br />
             hoje mesmo.
           </h1>
           <p className="mt-6 text-lg text-white/60 max-w-md leading-relaxed">
-            Junta-te a dezenas de operadores de TukTuk que ja usam a Tuk an App para crescer o seu negocio.
+            Junta-te a dezenas de operadores de TukTuk que já usam a Tuk an App para crescer o seu negócio.
           </p>
         </div>
 
@@ -124,7 +124,7 @@ export const SignupPage: React.FC = () => {
           </div>
 
           <h2 className="text-3xl font-extrabold text-ink">Criar conta</h2>
-          <p className="mt-2 text-ink2">Preenche os dados para comecar</p>
+          <p className="mt-2 text-ink2">Preenche os dados para começar</p>
 
           {error && (
             <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
@@ -135,7 +135,7 @@ export const SignupPage: React.FC = () => {
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             {/* Invite code */}
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">Codigo de convite *</label>
+              <label className="block text-sm font-medium text-ink mb-1.5">Código de convite *</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -155,7 +155,7 @@ export const SignupPage: React.FC = () => {
               </div>
               {codeValid && (
                 <p className="mt-1.5 text-sm text-green flex items-center gap-1">
-                  <Check className="w-4 h-4" /> Codigo valido
+                  <Check className="w-4 h-4" /> Código válido
                 </p>
               )}
             </div>
@@ -175,7 +175,7 @@ export const SignupPage: React.FC = () => {
           </form>
 
           <p className="mt-8 text-center text-sm text-ink2">
-            Ja tens conta?{' '}
+            Já tens conta?{' '}
             <Link to="/login" className="font-semibold text-copper hover:text-copper/80 transition-colors">
               Entrar
             </Link>
