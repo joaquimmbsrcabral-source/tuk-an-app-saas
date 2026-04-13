@@ -10,10 +10,12 @@ interface StatusBadgeProps {
 const statusConfig: Record<string, { label: string; dot: string; bg: string; text: string }> = {
   active: { label: 'Ativo', dot: 'bg-green', bg: 'bg-green/10', text: 'text-green' },
   online: { label: 'Online', dot: 'bg-green', bg: 'bg-green/10', text: 'text-green' },
+  available: { label: 'Dispon\u00edvel', dot: 'bg-green', bg: 'bg-green/10', text: 'text-green' },
   confirmed: { label: 'Confirmado', dot: 'bg-green', bg: 'bg-green/10', text: 'text-green' },
   completed: { label: 'Concluido', dot: 'bg-green', bg: 'bg-green/10', text: 'text-green' },
   pending: { label: 'Pendente', dot: 'bg-yellow', bg: 'bg-yellow/10', text: 'text-yellow' },
   maintenance: { label: 'Manuten\u00e7\u00e3o', dot: 'bg-yellow', bg: 'bg-yellow/10', text: 'text-yellow' },
+  busy: { label: 'Ocupado', dot: 'bg-copper', bg: 'bg-copper/10', text: 'text-copper' },
   inactive: { label: 'Inativo', dot: 'bg-muted', bg: 'bg-muted/10', text: 'text-muted' },
   offline: { label: 'Offline', dot: 'bg-muted', bg: 'bg-muted/10', text: 'text-muted' },
   retired: { label: 'Reformado', dot: 'bg-muted', bg: 'bg-muted/10', text: 'text-muted' },
