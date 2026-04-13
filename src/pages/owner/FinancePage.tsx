@@ -8,7 +8,7 @@ import { Input, Select } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { Payment } from '../../lib/types'
 import { formatCurrency, formatDate } from '../../lib/format'
-import { Download } from 'lucide-react'
+import { Download, Wallet } from 'lucide-react'
 
 export const FinancePage: React.FC = () => {
   const { profile } = useAuth()
@@ -171,7 +171,7 @@ export const FinancePage: React.FC = () => {
 
         {filteredPayments.length === 0 ? (
           <EmptyState
-            icon="💰"
+            icon={<Wallet size={24} />}
             title="Nenhum Pagamento"
             description="Nenhum pagamento encontrado com os filtros selecionados"
           />
