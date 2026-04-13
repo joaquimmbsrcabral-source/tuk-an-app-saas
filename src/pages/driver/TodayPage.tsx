@@ -141,7 +141,7 @@ export const TodayPage: React.FC = () => {
         {/* Greeting */}
         <div>
           <h1 className="text-xl font-bold text-gray-900">
-            Olá, {profile?.full_name?.split(' ')[0] || 'Motorista'} 👋
+            Olá, {profile?.full_name?.split(' ')[0] || 'Motorista'}
           </h1>
           <p className="text-sm text-gray-500 capitalize">
             {new Date().toLocaleDateString('pt-PT', {
@@ -209,10 +209,10 @@ export const TodayPage: React.FC = () => {
                   }`}
                 >
                   {s === 'available'
-                    ? '🟢 Disponível'
+                    ? '● Disponível'
                     : s === 'busy'
-                    ? '🟡 Ocupado'
-                    : '⚫ Offline'}
+                    ? '● Ocupado'
+                    : '● Offline'}
                 </button>
               ))}
             </div>
