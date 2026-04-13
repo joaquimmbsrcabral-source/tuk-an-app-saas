@@ -19,7 +19,7 @@ import {
   parseISO,
 } from 'date-fns'
 import { pt as ptPT } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, Car } from 'lucide-react'
 
 const DAY_LABELS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
 
@@ -221,7 +221,7 @@ export const DriverSchedulePage: React.FC = () => {
           <>
             {shifts.length === 0 ? (
               <EmptyState
-                icon="📅"
+                icon={<Calendar size={24} />}
                 title="Sem turnos este mês"
                 description="O teu owner ainda não te escalou para nenhum dia este mês."
               />
