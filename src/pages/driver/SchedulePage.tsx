@@ -193,7 +193,7 @@ export const DriverSchedulePage: React.FC = () => {
                   <div key={s.id} className="px-4 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-yellow bg-opacity-20 border border-yellow border-opacity-30 flex items-center justify-center text-xl">
-                        🛺
+                        
                       </div>
                       <div>
                         <p className="text-sm font-bold text-ink">Dia de trabalho</p>
@@ -247,7 +247,7 @@ export const DriverSchedulePage: React.FC = () => {
                         </p>
                         {s.tuktuk_id && tuktuks[s.tuktuk_id] && (
                           <p className="text-xs text-ink2 mt-0.5">
-                            🛺 {tuktuks[s.tuktuk_id].nickname || tuktuks[s.tuktuk_id].plate}
+                             {tuktuks[s.tuktuk_id].nickname || tuktuks[s.tuktuk_id].plate}
                           </p>
                         )}
                       </div>
