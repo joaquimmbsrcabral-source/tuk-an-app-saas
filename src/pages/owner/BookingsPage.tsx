@@ -10,6 +10,7 @@ import { EmptyState } from '../../components/EmptyState'
 import { Booking, TukTuk, TourCatalogItem } from '../../lib/types'
 import { formatDateTime, formatDateShort } from '../../lib/format'
 import { Plus, Trash2, Calendar } from 'lucide-react'
+import { StatusBadge } from '../../components/StatusBadge'
 
 export const BookingsPage: React.FC = () => {
   const { profile } = useAuth()
@@ -77,7 +78,6 @@ export const BookingsPage: React.FC = () => {
         .order('start_at', { ascending: false })
       setBookings(data || [])
     } catch (err) {
-      console.error('Error fetching bookings:', err)
     } finally {
       setLoading(false)
     }
@@ -93,7 +93,6 @@ export const BookingsPage: React.FC = () => {
         .eq('status', 'active')
       setTuktuks(data || [])
     } catch (err) {
-      console.error('Error fetching tuktuks:', err)
     }
   }
 
@@ -128,7 +127,6 @@ export const BookingsPage: React.FC = () => {
         notes: '',
       })
     } catch (err) {
-      console.error('Error saving:', err)
     }
   }
 
@@ -138,7 +136,6 @@ export const BookingsPage: React.FC = () => {
       await supabase.from('bookings').delete().eq('id', id)
       await fetchBookings()
     } catch (err) {
-      console.error('Error deleting:', err)
     }
   }
 
@@ -173,13 +170,7 @@ export const BookingsPage: React.FC = () => {
                     {formatDateTime(booking.start_at)} • {booking.pax} pax
                   </p>
                   <p className="text-sm text-ink2 mb-2">Partida: {booking.pickup_location}</p>
-                  <span className={`text-xs px-2 py-1 rounded-btn ${
-                    booking.status === 'completed' ? 'bg-green bg-opacity-10 text-green' :
-                    booking.status === 'cancelled' ? 'bg-copper bg-opacity-10 text-copper' :
-                    'bg-yellow bg-opacity-10 text-ink'
-                  }`}>
-                    {booking.status}
-                  </span>
+                   <StatusBadge status={booking.status} size="sm" />
                 </div>
                 <div className="flex gap-2">
                   <div className="text-right">
