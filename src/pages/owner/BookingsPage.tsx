@@ -9,7 +9,7 @@ import { Input, TextArea, Select } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { Booking, TukTuk, TourCatalogItem } from '../../lib/types'
 import { formatDateTime, formatDateShort } from '../../lib/format'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Calendar } from 'lucide-react'
 
 export const BookingsPage: React.FC = () => {
   const { profile } = useAuth()
@@ -157,7 +157,7 @@ export const BookingsPage: React.FC = () => {
 
         {bookings.length === 0 ? (
           <EmptyState
-            icon="📅"
+            icon={<Calendar size={24} />}
             title="Nenhuma Reserva"
             description="Comece a adicionar reservas"
             action={{ label: 'Nova Reserva', onClick: () => setIsModalOpen(true) }}
