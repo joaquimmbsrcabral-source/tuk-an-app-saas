@@ -192,7 +192,6 @@ export const DashboardPage: React.FC = () => {
           sourceBreakdown,
         })
       } catch (err) {
-        console.error('Error fetching stats:', err)
       } finally {
         setLoading(false)
       }
