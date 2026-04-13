@@ -140,7 +140,7 @@ export const DriverDetailPage: React.FC = () => {
               {stats.recent.map((r) => (
                 <div key={`${r.kind}-${r.id}`} className="flex items-center justify-between p-3 border border-line rounded-btn">
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{r.kind === 'street' ? '🏍️' : '📅'}</span>
+                    <span className="text-xl">{r.kind === 'street' ? '️' : ''}</span>
                     <div>
                       <div className="font-semibold text-ink text-sm">{r.name}</div>
                       <div className="text-xs text-ink2">{format(new Date(r.date), "d 'de' MMMM", { locale: pt })}</div>
