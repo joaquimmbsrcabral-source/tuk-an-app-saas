@@ -10,7 +10,7 @@ import { Input, TextArea, Select } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { TukTuk } from '../../lib/types'
 import { formatDate } from '../../lib/format'
-import { AlertCircle, Plus, Trash2, ChevronRight } from 'lucide-react'
+import { AlertCircle, Plus, Trash2, ChevronRight, Car } from 'lucide-react'
 
 export const FleetPage: React.FC = () => {
   const { profile } = useAuth()
@@ -61,7 +61,7 @@ export const FleetPage: React.FC = () => {
         </div>
 
         {tuktuks.length === 0 ? (
-          <EmptyState icon="🛺" title="Nenhum TukTuk" description="Comece a adicionar seus TukTuks à frota" action={{ label: 'Adicionar TukTuk', onClick: () => setIsModalOpen(true) }} />
+          <EmptyState icon={<Car size={24} />} title="Nenhum TukTuk" description="Comece a adicionar seus TukTuks à frota" action={{ label: 'Adicionar TukTuk', onClick: () => setIsModalOpen(true) }} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tuktuks.map((tk) => {
@@ -74,7 +74,7 @@ export const FleetPage: React.FC = () => {
                   className="text-left bg-white border border-line rounded-card p-5 hover:shadow-md transition-all hover:border-yellow group"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="text-5xl">🛺</div>
+                    <div className="w-12 h-12 rounded-xl bg-yellow/20 flex items-center justify-center"><Car size={28} className="text-ink" /></div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-lg font-bold text-ink truncate">{tk.nickname}</h3>
