@@ -1,4 +1,5 @@
 import React from 'react'
+import { Bell } from 'lucide-react'
 import { usePushNotifications } from '../hooks/usePushNotifications'
 
 export const PushNotificationPrompt: React.FC = () => {
@@ -28,7 +29,7 @@ export const PushNotificationPrompt: React.FC = () => {
   return (
     <div className="bg-yellow/10 border border-yellow/30 rounded-xl px-4 py-3">
       <div className="flex items-center gap-3">
-        <div className="text-2xl">🔔</div>
+        <div className="text-2xl"></div>
         <div className="flex-1">
           <div className="text-sm font-semibold text-ink">Ativar notificações</div>
           <div className="text-xs text-ink2 mt-0.5">
