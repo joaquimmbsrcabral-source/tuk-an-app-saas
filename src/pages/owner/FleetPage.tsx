@@ -11,6 +11,7 @@ import { EmptyState } from '../../components/EmptyState'
 import { TukTuk } from '../../lib/types'
 import { formatDate } from '../../lib/format'
 import { AlertCircle, Plus, Trash2, ChevronRight, Car } from 'lucide-react'
+import { StatusBadge } from '../../components/StatusBadge'
 
 export const FleetPage: React.FC = () => {
   const { profile } = useAuth()
@@ -83,7 +84,7 @@ export const FleetPage: React.FC = () => {
                       <p className="text-sm text-ink2 mb-1">Matrícula: {tk.plate}</p>
                       <p className="text-sm text-ink2 mb-3">{tk.color} · {tk.km} km</p>
                       <div className="flex gap-2 flex-wrap">
-                        <span className={`text-xs px-2 py-1 rounded-btn ${tk.status === 'active' ? 'bg-green bg-opacity-10 text-green' : 'bg-copper bg-opacity-10 text-copper'}`}>{tk.status}</span>
+                        <StatusBadge status={tk.status} size="sm" />
                         {insuranceExpiring && (
                           <span className="text-xs px-2 py-1 rounded-btn bg-copper bg-opacity-10 text-copper flex items-center gap-1">
                             <AlertCircle size={12} /> Seguro {formatDate(tk.insurance_expiry)}
