@@ -12,15 +12,15 @@ const DEFAULT_COMPANY_ID = import.meta.env.VITE_DEFAULT_COMPANY_ID || TUKNROLL_C
 const tourMeta: Record<string, { emoji: string; highlights: string[] }> = {
   'Historico': {
     emoji: '\u{1F3F0}',
-    highlights: ['Alfama', 'S\u00e9 Cathedral', 'Castelo de S. Jorge', 'Miradouros'],
+    highlights: ['Alfama', 'S\u00e9 Cathedral', 'Portas do Sol', 'Igreja S. Vicente de Fora'],
   },
   'Nova Lisboa': {
     emoji: '\u{2728}',
-    highlights: ['Pr\u00edncipe Real', 'Bairro Alto', 'Av. da Liberdade', 'Santos'],
+    highlights: ['Convento Do Carmo', 'Elevador Santa Justa', 'Pr\u00edncipe Real', 'Bas\u00edlica da Estrela'],
   },
   'Belem': {
     emoji: '\u{26F5}',
-    highlights: ['Torre de Bel\u00e9m', 'Jer\u00f3nimos', 'Past\u00e9is de Bel\u00e9m', 'LX Factory'],
+    highlights: ['Torre de Bel\u00e9m', 'Mosteiro dos Jer\u00f3nimos', 'Past\u00e9is de Bel\u00e9m', 'Padr\u00e3o dos Descobrimentos'],
   },
 }
 
@@ -67,7 +67,7 @@ export function BookingWidget() {
   const [fetchError, setFetchError] = useState(false)
 
   const selectedTour = tours.find(t => t.id === form.tour_id)
-  const totalPrice = selectedTour ? selectedTour.default_price * form.pax : 0
+  const totalPrice = selectedTour ? selectedTour.default_price : 0
 
   useEffect(() => {
     fetchTours()
@@ -285,7 +285,7 @@ export function BookingWidget() {
                           <div className="flex justify-between items-start gap-2">
                             <h3 className="font-semibold text-charcoal text-base">{tour.name}</h3>
                             <span className="text-copper font-bold whitespace-nowrap">
-                              {formatCurrency(tour.default_price)}/pp
+                              {formatCurrency(tour.default_price)}/tuktuk
                             </span>
                           </div>
                           {tour.description && (
@@ -382,7 +382,7 @@ export function BookingWidget() {
                 <div>
                   <p className="text-sm text-clay">Total</p>
                   <p className="text-xs text-clay">
-                    {form.pax} {form.pax === 1 ? 'person' : 'people'} x {formatCurrency(selectedTour.default_price)}
+                    Per TukTuk (up to 6 pax)
                   </p>
                 </div>
                 <p className="text-2xl font-bold text-copper">{formatCurrency(totalPrice)}</p>
@@ -565,7 +565,7 @@ export function BookingWidget() {
               <div className="flex justify-between items-center pt-1">
                 <div>
                   <span className="text-sm text-clay">
-                    {form.pax} x {formatCurrency(selectedTour.default_price)}
+                    Per TukTuk (up to 6 pax)
                   </span>
                 </div>
                 <div className="text-right">
