@@ -3,8 +3,19 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Logo } from './Logo'
 import {
-  BarChart3, Box, Calendar, Users, DollarSign, Settings, LogOut,
-  Shield, CalendarDays, ChevronLeft, ChevronRight, MessageCircle
+  BarChart3,
+  Box,
+  Calendar,
+  Users,
+  DollarSign,
+  Settings,
+  LogOut,
+  Shield,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  MessageCircle,
+  Tag,
 } from 'lucide-react'
 
 interface OwnerLayoutProps {
@@ -23,6 +34,7 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
     { path: '/motoristas', label: 'Motoristas', icon: Users },
     { path: '/escala', label: 'Escala', icon: CalendarDays },
     { path: '/financas', label: 'Finanças', icon: DollarSign },
+    { path: '/codigos', label: 'Códigos', icon: Tag },
     { path: '/suporte', label: 'Suporte', icon: MessageCircle },
     { path: '/definicoes', label: 'Definições', icon: Settings },
     ...(profile?.is_super_admin
@@ -31,7 +43,6 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
   ]
 
   const isActive = (path: string) => location.pathname === path
-
   const initials = (profile?.full_name || 'O').charAt(0).toUpperCase()
 
   return (
