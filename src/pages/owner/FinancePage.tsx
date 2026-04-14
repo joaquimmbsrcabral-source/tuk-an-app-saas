@@ -116,20 +116,32 @@ export const FinancePage: React.FC = () => {
   const fetchPayments = async () => {
     if (!profile) return
     try {
-      /* join with profiles (driver name) and bookings (tour_type) */
-      const { data, error } = await supabase
-        .from('payments')
-        .select(`
-          *,
-          driver:profiles!received_by ( full_name ),
-          booking:bookings!booking_id ( tour_type )
-        `)
-        .eq('company_id', profile.company_id)
-        .order('received_at', { ascending: false })
+      /* fetch payments, profiles and bookings separately then join client-side */
+      const [paymentsRes, profilesRes, bookingsRes] = await Promise.all([
+        supabase
+          .from('payments')
+          .select('*')
+          .eq('company_id', profile.company_id)
+          .order('received_at', { ascending: false }),
+        supabase
+          .from('profiles')
+          .select('id, full_name')
+          .eq('company_id', profile.company_id),
+        supabase
+          .from('bookings')
+          .select('id, tour_type')
+          .eq('company_id', profile.company_id),
+      ])
 
-      if (error) throw error
+      if (paymentsRes.error) throw paymentsRes.error
 
-      const enriched: EnrichedPayment[] = (data || []).map((p: any) => ({
+      const profileMap: Record<string, string> = {}
+      ;(profilesRes.data || []).forEach((pr: any) => { profileMap[pr.id] = pr.full_name })
+
+      const bookingMap: Record<string, string> = {}
+      ;(bookingsRes.data || []).forEach((b: any) => { bookingMap[b.id] = b.tour_type })
+
+      const enriched: EnrichedPayment[] = (paymentsRes.data || []).map((p: any) => ({
         id: p.id,
         company_id: p.company_id,
         booking_id: p.booking_id,
@@ -138,13 +150,12 @@ export const FinancePage: React.FC = () => {
         received_at: p.received_at,
         received_by: p.received_by,
         notes: p.notes,
-        driver_name: p.driver?.full_name || 'Desconhecido',
-        tour_type: p.booking?.tour_type || null,
+        driver_name: profileMap[p.received_by] || 'Desconhecido',
+        tour_type: bookingMap[p.booking_id] || null,
       }))
       setPayments(enriched)
     } catch (err) {
       console.error('Error fetching payments:', err)
-      /* fallback: fetch without joins */
       const { data } = await supabase
         .from('payments')
         .select('*')
