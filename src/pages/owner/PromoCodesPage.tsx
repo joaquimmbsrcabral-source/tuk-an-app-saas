@@ -9,7 +9,7 @@ import { Input, Select } from '../../components/Input'
 import { Modal } from '../../components/Modal'
 import { EmptyState } from '../../components/EmptyState'
 import { formatCurrency, formatDate } from '../../lib/format'
-import { Copy, Trash2, Toggle2, Plus } from 'lucide-react'
+import { Copy, Trash2, ToggleRight, Plus } from 'lucide-react'
 
 interface PromoCode {
   id: string
@@ -446,7 +446,7 @@ export const PromoCodesPage: React.FC = () => {
                         }`}
                         title={code.active ? 'Desativar' : 'Ativar'}
                       >
-                        <Toggle2 size={18} />
+                        <ToggleRight size={18} />
                       </Button>
 
                       <Button
