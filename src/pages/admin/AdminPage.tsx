@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { OwnerLayout } from '../../components/OwnerLayout'
 import { Card } from '../../components/Card'
 import { Button } from '../../components/Button'
-import { Input } from '../../components/Input'
-import { Copy, Trash2, Plus } from 'lucide-react'
 
-type Row = {
+type CompanyRow = {
   id: string
   name: string
   nif: string
@@ -20,72 +17,158 @@ type Row = {
   payment_status: 'trial' | 'active' | 'past_due' | 'unknown'
 }
 
+type Invite = {
+  id: string
+  code: string
+  note: string | null
+  created_at: string
+  used_at: string | null
+  used_by: string | null
+  expires_at: string | null
+  created_by: string | null
+}
+
+type Tab = 'overview' | 'invites' | 'help'
+
+const SIGNUP_BASE = (typeof window !== 'undefined' ? window.location.origin : 'https://www.tukanapp.pt')
+
+function makeCode(noteHint = ''): string {
+  const year = new Date().getFullYear()
+  const letters = (noteHint || '')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+  const alpha = 'ABCDEFGHJKMNPQRSTUVWXYZ'
+  const rand = Array.from({ length: 2 }, () => alpha[Math.floor(Math.random() * alpha.length)]).join('')
+  const prefix = letters.length >= 2 ? letters.slice(0, 2) : (letters + rand).slice(0, 2)
+  return `${prefix}-${year}`
+}
+
 export const AdminPage: React.FC = () => {
-  const { profile } = useAuth()
-  const [rows, setRows] = useState<Row[]>([])
-  const [loading, setLoading] = useState(true)
-  const [invites, setInvites] = useState<any[]>([])
+  const [tab, setTab] = useState<Tab>('overview')
+
+  // Overview state
+  const [rows, setRows] = useState<CompanyRow[]>([])
+  const [loadingRows, setLoadingRows] = useState(true)
+
+  // Invite state
+  const [invites, setInvites] = useState<Invite[]>([])
+  const [loadingInvites, setLoadingInvites] = useState(false)
   const [newCode, setNewCode] = useState('')
   const [newNote, setNewNote] = useState('')
+  const [newExpires, setNewExpires] = useState('')
+  const [inviteErr, setInviteErr] = useState('')
+  const [inviteMsg, setInviteMsg] = useState('')
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   useEffect(() => {
-    (async () => {
-      try {
-        const { data: companies } = await supabase.from('companies').select('*').order('created_at', { ascending: false })
-        const { data: profiles } = await supabase.from('profiles').select('id,company_id,role')
-        const { data: tuktuks } = await supabase.from('tuktuks').select('id,company_id')
-        const { data: bookings } = await supabase.from('bookings').select('id,company_id,price,status')
-        const result: Row[] = (companies || []).map((c: any) => {
-          const cps = (profiles || []).filter((p: any) => p.company_id === c.id)
-          const cbk = (bookings || []).filter((b: any) => b.company_id === c.id)
-          const createdDays = Math.floor((Date.now() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24))
-          return {
-            id: c.id,
-            name: c.name,
-            nif: c.nif || '—',
-            created_at: c.created_at,
-            owners: cps.filter((p: any) => p.role === 'owner').length,
-            drivers: cps.filter((p: any) => p.role === 'driver').length,
-            tuktuks: (tuktuks || []).filter((t: any) => t.company_id === c.id).length,
-            bookings: cbk.length,
-            revenue: cbk.filter((b: any) => b.status === 'completed').reduce((s: number, b: any) => s + Number(b.price || 0), 0),
-            payment_status: createdDays < 30 ? 'trial' : 'unknown',
-          }
-        })
-        setRows(result)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setLoading(false)
-      }
-      fetchInvites()
-    })()
+    loadOverview()
   }, [])
 
-  const fetchInvites = async () => {
-    const { data } = await supabase.from('signup_invites').select('*').order('created_at', { ascending: false })
-    setInvites(data || [])
+  useEffect(() => {
+    if (tab === 'invites') loadInvites()
+  }, [tab])
+
+  async function loadOverview() {
+    setLoadingRows(true)
+    try {
+      const { data: companies } = await supabase.from('companies').select('*').order('created_at', { ascending: false })
+      const { data: profiles } = await supabase.from('profiles').select('id,company_id,role')
+      const { data: tuktuks } = await supabase.from('tuktuks').select('id,company_id')
+      const { data: bookings } = await supabase.from('bookings').select('id,company_id,price,status')
+
+      const result: CompanyRow[] = (companies || []).map((c: any) => {
+        const cps = (profiles || []).filter((p: any) => p.company_id === c.id)
+        const cbk = (bookings || []).filter((b: any) => b.company_id === c.id)
+        const createdDays = Math.floor((Date.now() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24))
+        return {
+          id: c.id,
+          name: c.name,
+          nif: c.nif || '—',
+          created_at: c.created_at,
+          owners: cps.filter((p: any) => p.role === 'owner').length,
+          drivers: cps.filter((p: any) => p.role === 'driver').length,
+          tuktuks: (tuktuks || []).filter((t: any) => t.company_id === c.id).length,
+          bookings: cbk.length,
+          revenue: cbk.filter((b: any) => b.status === 'completed').reduce((s: number, b: any) => s + Number(b.price || 0), 0),
+          payment_status: createdDays < 30 ? 'trial' : 'unknown',
+        }
+      })
+      setRows(result)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoadingRows(false)
+    }
   }
 
-  const generate = async () => {
-    if (!profile) return
-    const code = newCode.trim() || `INV-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
-    const { error } = await supabase.from('signup_invites').insert([{ code, note: newNote || null, created_by: profile.id }])
-    if (error) { alert(error.message); return }
-    setNewCode(''); setNewNote('')
-    fetchInvites()
+  async function loadInvites() {
+    setLoadingInvites(true)
+    try {
+      const { data, error } = await supabase
+        .from('signup_invites')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setInvites((data || []) as Invite[])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoadingInvites(false)
+    }
   }
 
-  const removeInvite = async (id: string) => {
-    if (!window.confirm('Apagar este convite?')) return
-    await supabase.from('signup_invites').delete().eq('id', id)
-    fetchInvites()
+  async function handleCreateInvite(e: React.FormEvent) {
+    e.preventDefault()
+    setInviteErr('')
+    setInviteMsg('')
+    const codeValue = (newCode || makeCode(newNote)).toUpperCase().trim()
+    if (codeValue.length < 3) {
+      setInviteErr('Código tem de ter pelo menos 3 caracteres')
+      return
+    }
+    try {
+      const payload: any = { p_code: codeValue, p_note: newNote || null }
+      if (newExpires) payload.p_expires_at = new Date(newExpires).toISOString()
+      const { error } = await supabase.rpc('admin_create_invite', payload)
+      if (error) {
+        if ((error.message || '').includes('code_exists')) throw new Error('Já existe um código com esse valor')
+        throw error
+      }
+      setInviteMsg(`Código ${codeValue} criado`)
+      setNewCode('')
+      setNewNote('')
+      setNewExpires('')
+      await loadInvites()
+    } catch (err: any) {
+      setInviteErr(err.message || 'Falha ao criar código')
+    }
   }
 
-  const copyLink = (code: string) => {
-    const link = `${window.location.origin}/signup?code=${encodeURIComponent(code)}`
-    navigator.clipboard.writeText(link)
-    alert('Link copiado!\n' + link)
+  async function handleDeleteInvite(id: string) {
+    if (!confirm('Eliminar este código? Só é possível se ainda não foi usado.')) return
+    try {
+      const { error } = await supabase.rpc('admin_delete_invite', { p_id: id })
+      if (error) throw error
+      await loadInvites()
+    } catch (e: any) {
+      alert(e.message || 'Falha ao eliminar')
+    }
+  }
+
+  async function copyLink(invite: Invite) {
+    const url = `${SIGNUP_BASE}/signup?code=${encodeURIComponent(invite.code)}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedId(invite.id)
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch {
+      prompt('Copia este link:', url)
+    }
   }
 
   const totals = rows.reduce(
@@ -99,113 +182,273 @@ export const AdminPage: React.FC = () => {
     { companies: 0, drivers: 0, tuktuks: 0, bookings: 0, revenue: 0 }
   )
 
+  const activeInvites = invites.filter((i) => !i.used_at && (!i.expires_at || new Date(i.expires_at) > new Date()))
+  const usedInvites = invites.filter((i) => i.used_at)
+
   return (
     <OwnerLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">Admin · Tuk an App</h1>
-          <p className="text-ink2 text-sm">Visão global de todas as empresas da plataforma.</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card><div className="text-xs text-ink2">Empresas</div><div className="text-2xl font-bold text-ink">{totals.companies}</div></Card>
-          <Card><div className="text-xs text-ink2">Motoristas</div><div className="text-2xl font-bold text-ink">{totals.drivers}</div></Card>
-          <Card><div className="text-xs text-ink2">TukTuks</div><div className="text-2xl font-bold text-ink">{totals.tuktuks}</div></Card>
-          <Card><div className="text-xs text-ink2">Reservas</div><div className="text-2xl font-bold text-ink">{totals.bookings}</div></Card>
-          <Card><div className="text-xs text-ink2">Receita €</div><div className="text-2xl font-bold text-ink">{totals.revenue.toFixed(0)}</div></Card>
-        </div>
-        <Card>
-          {loading ? (
-            <div className="text-center py-8 text-ink2">A carregar...</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-line text-left text-ink2">
-                    <th className="py-2 pr-4">Empresa</th>
-                    <th className="py-2 pr-4">NIF</th>
-                    <th className="py-2 pr-4">Owners</th>
-                    <th className="py-2 pr-4">Motoristas</th>
-                    <th className="py-2 pr-4">TukTuks</th>
-                    <th className="py-2 pr-4">Reservas</th>
-                    <th className="py-2 pr-4">Receita €</th>
-                    <th className="py-2 pr-4">Pagamento</th>
-                    <th className="py-2 pr-4">Desde</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.id} className="border-b border-line">
-                      <td className="py-2 pr-4 font-medium text-ink">{r.name}</td>
-                      <td className="py-2 pr-4 text-ink2">{r.nif}</td>
-                      <td className="py-2 pr-4">{r.owners}</td>
-                      <td className="py-2 pr-4">{r.drivers}</td>
-                      <td className="py-2 pr-4">{r.tuktuks}</td>
-                      <td className="py-2 pr-4">{r.bookings}</td>
-                      <td className="py-2 pr-4">{r.revenue.toFixed(0)}</td>
-                      <td className="py-2 pr-4">
-                        <span className={`text-xs px-2 py-1 rounded-btn ${
-                          r.payment_status === 'active' ? 'bg-green bg-opacity-10 text-green' :
-                          r.payment_status === 'trial' ? 'bg-yellow bg-opacity-20 text-ink' :
-                          r.payment_status === 'past_due' ? 'bg-red-100 text-red-700' :
-                          'bg-line text-ink2'
-                        }`}>
-                          {r.payment_status === 'trial' ? 'Trial' : r.payment_status === 'active' ? 'Ativo' : r.payment_status === 'past_due' ? 'Em atraso' : '—'}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-4 text-ink2">{new Date(r.created_at).toLocaleDateString('pt-PT')}</td>
-                    </tr>
-                  ))}
-                  {rows.length === 0 && (
-                    <tr><td colSpan={9} className="py-6 text-center text-ink2">Sem empresas ainda.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-
-        <Card>
-          <h2 className="text-lg font-bold text-ink mb-4">Convites de Registo</h2>
-          <p className="text-xs text-ink2 mb-3">Só pessoas com código válido podem criar conta. Gera um código e partilha o link.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            <Input label="Código (opcional)" value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="AMIGO-2026" />
-            <Input label="Nota" value={newNote} onChange={(e) => setNewNote(e.target.value)} placeholder="Para quem é" />
-            <div className="flex items-end">
-              <Button onClick={generate} variant="primary" className="w-full"><Plus size={18} className="mr-2" />Gerar Convite</Button>
-            </div>
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-ink">Super Admin · Tuk an App</h1>
+            <p className="text-ink2 text-sm">Gestão da plataforma — empresas, convites e suporte.</p>
           </div>
-          {invites.length === 0 ? (
-            <p className="text-sm text-ink2 text-center py-4">Nenhum convite criado ainda.</p>
-          ) : (
-            <div className="space-y-2">
-              {invites.map((inv) => (
-                <div key={inv.id} className="flex items-center justify-between p-3 border border-line rounded-btn">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <code className="font-mono font-bold text-ink">{inv.code}</code>
-                      {inv.used_at ? (
-                        <span className="text-xs px-2 py-1 rounded-btn bg-ink2 bg-opacity-10 text-ink2">Usado</span>
-                      ) : (
-                        <span className="text-xs px-2 py-1 rounded-btn bg-green bg-opacity-10 text-green">Ativo</span>
-                      )}
-                    </div>
-                    {inv.note && <p className="text-xs text-ink2 mt-1">{inv.note}</p>}
-                  </div>
-                  <div className="flex gap-1">
-                    {!inv.used_at && (
-                      <button onClick={() => copyLink(inv.code)} className="p-2 text-ink2 hover:text-ink" title="Copiar link">
-                        <Copy size={16} />
-                      </button>
-                    )}
-                    <button onClick={() => removeInvite(inv.id)} className="p-2 text-copper hover:text-copper">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+          <div className="flex gap-2">
+            <button
+              className={`px-4 py-2 rounded-btn text-sm font-600 ${tab === 'overview' ? 'bg-ink text-cream' : 'bg-line text-ink hover:bg-ink hover:text-cream'}`}
+              onClick={() => setTab('overview')}
+            >
+              Visão Geral
+            </button>
+            <button
+              className={`px-4 py-2 rounded-btn text-sm font-600 ${tab === 'invites' ? 'bg-ink text-cream' : 'bg-line text-ink hover:bg-ink hover:text-cream'}`}
+              onClick={() => setTab('invites')}
+            >
+              Códigos de Convite
+            </button>
+            <button
+              className={`px-4 py-2 rounded-btn text-sm font-600 ${tab === 'help' ? 'bg-ink text-cream' : 'bg-line text-ink hover:bg-ink hover:text-cream'}`}
+              onClick={() => setTab('help')}
+            >
+              Como Funciona
+            </button>
+          </div>
+        </div>
+
+        {tab === 'overview' && (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <Card><div className="text-xs text-ink2">Empresas</div><div className="text-2xl font-bold text-ink">{totals.companies}</div></Card>
+              <Card><div className="text-xs text-ink2">Motoristas</div><div className="text-2xl font-bold text-ink">{totals.drivers}</div></Card>
+              <Card><div className="text-xs text-ink2">TukTuks</div><div className="text-2xl font-bold text-ink">{totals.tuktuks}</div></Card>
+              <Card><div className="text-xs text-ink2">Reservas</div><div className="text-2xl font-bold text-ink">{totals.bookings}</div></Card>
+              <Card><div className="text-xs text-ink2">Receita €</div><div className="text-2xl font-bold text-ink">{totals.revenue.toFixed(0)}</div></Card>
             </div>
-          )}
-        </Card>
+
+            <Card>
+              {loadingRows ? (
+                <div className="text-center py-8 text-ink2">A carregar...</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-line text-left text-ink2">
+                        <th className="py-2 pr-4">Empresa</th>
+                        <th className="py-2 pr-4">NIF</th>
+                        <th className="py-2 pr-4">Owners</th>
+                        <th className="py-2 pr-4">Motoristas</th>
+                        <th className="py-2 pr-4">TukTuks</th>
+                        <th className="py-2 pr-4">Reservas</th>
+                        <th className="py-2 pr-4">Receita €</th>
+                        <th className="py-2 pr-4">Pagamento</th>
+                        <th className="py-2 pr-4">Desde</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r) => (
+                        <tr key={r.id} className="border-b border-line">
+                          <td className="py-2 pr-4 font-medium text-ink">{r.name}</td>
+                          <td className="py-2 pr-4 text-ink2">{r.nif}</td>
+                          <td className="py-2 pr-4">{r.owners}</td>
+                          <td className="py-2 pr-4">{r.drivers}</td>
+                          <td className="py-2 pr-4">{r.tuktuks}</td>
+                          <td className="py-2 pr-4">{r.bookings}</td>
+                          <td className="py-2 pr-4">{r.revenue.toFixed(0)}</td>
+                          <td className="py-2 pr-4">
+                            <span className={`text-xs px-2 py-1 rounded-btn ${
+                              r.payment_status === 'active' ? 'bg-green bg-opacity-10 text-green' :
+                              r.payment_status === 'trial' ? 'bg-yellow bg-opacity-20 text-ink' :
+                              r.payment_status === 'past_due' ? 'bg-red-100 text-red-700' :
+                              'bg-line text-ink2'
+                            }`}>
+                              {r.payment_status === 'trial' ? 'Trial' :
+                               r.payment_status === 'active' ? 'Ativo' :
+                               r.payment_status === 'past_due' ? 'Em atraso' : '—'}
+                            </span>
+                          </td>
+                          <td className="py-2 pr-4 text-ink2">{new Date(r.created_at).toLocaleDateString('pt-PT')}</td>
+                        </tr>
+                      ))}
+                      {rows.length === 0 && (
+                        <tr><td colSpan={9} className="py-6 text-center text-ink2">Sem empresas ainda.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+
+        {tab === 'invites' && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card><div className="text-xs text-ink2">Códigos ativos</div><div className="text-2xl font-bold text-ink">{activeInvites.length}</div></Card>
+              <Card><div className="text-xs text-ink2">Códigos usados</div><div className="text-2xl font-bold text-ink">{usedInvites.length}</div></Card>
+              <Card><div className="text-xs text-ink2">Total gerado</div><div className="text-2xl font-bold text-ink">{invites.length}</div></Card>
+            </div>
+
+            <Card>
+              <h2 className="text-lg font-bold text-ink mb-4">Criar novo código</h2>
+              {inviteErr && (
+                <div className="bg-copper bg-opacity-10 border border-copper text-copper px-4 py-2 rounded-btn mb-3 text-sm">{inviteErr}</div>
+              )}
+              {inviteMsg && (
+                <div className="bg-green-50 border border-green-300 text-green-700 px-4 py-2 rounded-btn mb-3 text-sm">{inviteMsg}</div>
+              )}
+              <form onSubmit={handleCreateInvite} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs text-ink2 mb-1">Nome / Empresa (opcional)</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 bg-card border border-line rounded-btn text-sm"
+                    placeholder="Ex: Salvador Sá"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-ink2 mb-1">Código (vazio = gerar)</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 bg-card border border-line rounded-btn text-sm uppercase font-mono"
+                    placeholder="SA-2026"
+                    value={newCode}
+                    onChange={(e) => setNewCode(e.target.value.toUpperCase())}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-ink2 mb-1">Expira a (opcional)</label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 bg-card border border-line rounded-btn text-sm"
+                    value={newExpires}
+                    onChange={(e) => setNewExpires(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button type="submit" variant="primary" className="w-full">Criar código</Button>
+                </div>
+              </form>
+              <p className="text-xs text-ink2 mt-3">
+                Depois de criar o código, copia o link e envia ao cliente. O link abre o registo já com o código preenchido.
+              </p>
+            </Card>
+
+            <Card>
+              <h2 className="text-lg font-bold text-ink mb-4">Códigos ativos ({activeInvites.length})</h2>
+              {loadingInvites ? (
+                <div className="text-center py-8 text-ink2">A carregar...</div>
+              ) : activeInvites.length === 0 ? (
+                <div className="text-center py-8 text-ink2">Nenhum código ativo.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-line text-left text-ink2">
+                        <th className="py-2 pr-4">Código</th>
+                        <th className="py-2 pr-4">Nota</th>
+                        <th className="py-2 pr-4">Criado</th>
+                        <th className="py-2 pr-4">Expira</th>
+                        <th className="py-2 pr-4">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeInvites.map((i) => (
+                        <tr key={i.id} className="border-b border-line">
+                          <td className="py-2 pr-4 font-mono font-bold text-ink">{i.code}</td>
+                          <td className="py-2 pr-4 text-ink2">{i.note || '—'}</td>
+                          <td className="py-2 pr-4 text-ink2">{new Date(i.created_at).toLocaleDateString('pt-PT')}</td>
+                          <td className="py-2 pr-4 text-ink2">{i.expires_at ? new Date(i.expires_at).toLocaleDateString('pt-PT') : 'Nunca'}</td>
+                          <td className="py-2 pr-4">
+                            <div className="flex gap-2">
+                              <button
+                                className="px-3 py-1 text-xs rounded-btn bg-yellow text-ink font-600 hover:bg-yellow-dark"
+                                onClick={() => copyLink(i)}
+                              >
+                                {copiedId === i.id ? '✓ Copiado' : 'Copiar link'}
+                              </button>
+                              <button
+                                className="px-3 py-1 text-xs rounded-btn bg-line text-ink2 hover:bg-copper hover:text-cream"
+                                onClick={() => handleDeleteInvite(i.id)}
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+
+            {usedInvites.length > 0 && (
+              <Card>
+                <h2 className="text-lg font-bold text-ink mb-4">Códigos usados ({usedInvites.length})</h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-line text-left text-ink2">
+                        <th className="py-2 pr-4">Código</th>
+                        <th className="py-2 pr-4">Nota</th>
+                        <th className="py-2 pr-4">Usado a</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usedInvites.map((i) => (
+                        <tr key={i.id} className="border-b border-line">
+                          <td className="py-2 pr-4 font-mono text-ink2 line-through">{i.code}</td>
+                          <td className="py-2 pr-4 text-ink2">{i.note || '—'}</td>
+                          <td className="py-2 pr-4 text-ink2">{i.used_at ? new Date(i.used_at).toLocaleString('pt-PT') : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            )}
+          </>
+        )}
+
+        {tab === 'help' && (
+          <Card>
+            <h2 className="text-xl font-bold text-ink mb-4">Como convidar um novo cliente (Owner)</h2>
+            <ol className="list-decimal list-inside space-y-3 text-ink">
+              <li>
+                Vai a <strong>Códigos de Convite</strong> e cria um código novo.
+                <div className="text-sm text-ink2 ml-6 mt-1">
+                  Escreve o nome/empresa do cliente (ex: <em>Salvador Sá</em>) e clica em <strong>Criar código</strong>. O código é gerado automaticamente (ex: <code>SA-2026</code>).
+                </div>
+              </li>
+              <li>
+                Copia o <strong>link de convite</strong> (botão <em>Copiar link</em>).
+                <div className="text-sm text-ink2 ml-6 mt-1">
+                  Exemplo: <code>{SIGNUP_BASE}/signup?code=SA-2026</code>
+                </div>
+              </li>
+              <li>
+                Envia o link ao cliente por <strong>email, WhatsApp ou SMS</strong>.
+                <div className="text-sm text-ink2 ml-6 mt-1">
+                  Quando o cliente abre o link, o código já vai preenchido. Ele só tem de completar nome, empresa, telefone, email e palavra-passe.
+                </div>
+              </li>
+              <li>
+                Quando o cliente concluir o registo, o código é <strong>marcado como usado</strong> automaticamente e não pode ser reutilizado.
+              </li>
+            </ol>
+            <div className="mt-6 bg-yellow bg-opacity-10 border border-yellow rounded-btn p-4">
+              <h3 className="font-bold text-ink mb-2">Problemas comuns</h3>
+              <ul className="text-sm text-ink2 space-y-1 list-disc list-inside">
+                <li><strong>O cliente não viu onde meter o código</strong> — envia-lhe o link completo (<code>/signup?code=...</code>) para ser automático.</li>
+                <li><strong>Email já registado</strong> — o cliente tem de usar um email que ainda não existe no sistema.</li>
+                <li><strong>Código já usado</strong> — cria um novo código e envia.</li>
+                <li><strong>Não recebeu email de confirmação</strong> — diz-lhe para verificar o spam, ou reenvia o link.</li>
+              </ul>
+            </div>
+          </Card>
+        )}
       </div>
     </OwnerLayout>
   )
