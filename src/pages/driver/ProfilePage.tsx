@@ -15,6 +15,7 @@ export const ProfilePage: React.FC = () => {
     phone: profile?.phone || '',
   })
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [companyName, setCompanyName] = useState<string | null>(null)
 
   useEffect(() => {
@@ -40,6 +41,8 @@ export const ProfilePage: React.FC = () => {
           phone: form.phone,
         })
         .eq('id', profile.id)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
     } catch (err) {
       console.error('Error saving:', err)
     } finally {
@@ -73,8 +76,11 @@ export const ProfilePage: React.FC = () => {
               placeholder="+351 9XX XXX XXX"
             />
             <Button onClick={handleSave} variant="primary" disabled={saving} className="w-full">
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando...' : saved ? '\u2713 Guardado!' : 'Guardar'}
             </Button>
+            {saved && (
+              <p className="text-sm text-green text-center font-medium">Perfil atualizado com sucesso!</p>
+            )}
           </div>
         </Card>
 
