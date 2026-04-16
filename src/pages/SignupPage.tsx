@@ -5,69 +5,101 @@ import { supabase } from '../lib/supabase'
 import { Logo } from '../components/Logo'
 import { Input } from '../components/Input'
 import { Button } from '../components/Button'
-import { Check, X, Loader2, BarChart3, Users, Calendar } from 'lucide-react'
+
+type CodeStatus =
+  | { state: 'idle' }
+  | { state: 'checking' }
+  | { state: 'valid'; note?: string | null }
+  | { state: 'invalid'; reason: string }
+
+const REASON_MSG: Record<string, string> = {
+  not_found: 'Código não encontrado',
+  already_used: 'Este código já foi utilizado',
+  expired: 'Este código expirou',
+}
 
 export const SignupPage: React.FC = () => {
   const navigate = useNavigate()
   const { signUp } = useAuth()
   const [searchParams] = useSearchParams()
+
+  const [code, setCode] = useState((searchParams.get('code') || '').toUpperCase())
+  const [codeStatus, setCodeStatus] = useState<CodeStatus>({ state: 'idle' })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [phone, setPhone] = useState('')
-  const [code, setCode] = useState(searchParams.get('code') || '')
-  const [inviteId, setInviteId] = useState<string | null>(null)
-  const [codeChecking, setCodeChecking] = useState(false)
-  const [codeValid, setCodeValid] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Debounced code validation
   useEffect(() => {
-    if (code) validateCode(code)
-  }, [])
-
-  const validateCode = async (c: string) => {
-    setCodeChecking(true)
-    setError('')
-    setCodeValid(false)
-    setInviteId(null)
-    try {
-      const { data, error: e } = await supabase
-        .from('signup_invites')
-        .select('id, code, used')
-        .eq('code', c.trim().toUpperCase())
-        .maybeSingle()
-      if (e) throw e
-      if (data && !data.used) {
-        setCodeValid(true)
-        setInviteId(data.id)
-      } else {
-        setError(data?.used ? 'Este código já foi utilizado' : 'Código de convite inválido')
-      }
-    } catch {
-      setError('Erro ao validar código')
-    } finally {
-      setCodeChecking(false)
+    const trimmed = code.trim().toUpperCase()
+    if (!trimmed || trimmed.length < 3) {
+      setCodeStatus({ state: 'idle' })
+      return
     }
-  }
+    setCodeStatus({ state: 'checking' })
+    const handle = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.rpc('validate_invite_code', { p_code: trimmed })
+        if (error) {
+          setCodeStatus({ state: 'invalid', reason: 'not_found' })
+          return
+        }
+        const row = Array.isArray(data) ? data[0] : data
+        if (row?.valid) {
+          setCodeStatus({ state: 'valid', note: row.note })
+        } else {
+          setCodeStatus({ state: 'invalid', reason: row?.reason || 'not_found' })
+        }
+      } catch {
+        setCodeStatus({ state: 'invalid', reason: 'not_found' })
+      }
+    }, 350)
+    return () => clearTimeout(handle)
+  }, [code])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!codeValid) { setError('Introduz um código de convite válido'); return }
     setError('')
+
+    const trimmedCode = code.trim().toUpperCase()
+    if (!trimmedCode) {
+      setError('É necessário um código de convite para criar uma conta.')
+      return
+    }
+    if (codeStatus.state !== 'valid') {
+      setError('Código de convite inválido. Verifica com quem te enviou o código.')
+      return
+    }
+
     setLoading(true)
     try {
-      await signUp(email, password, {
-        full_name: fullName,
-        company_name: companyName,
-        phone,
-        invite_id: inviteId,
-      })
-      if (inviteId) {
-        await supabase.from('signup_invites').update({ used: true, used_by: email }).eq('id', inviteId)
+      // Sign up + sign in to get a session
+      await signUp(email, password)
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) {
+        throw new Error('Conta criada. Verifica o teu email para confirmar antes de entrar.')
       }
-      navigate('/dashboard')
+
+      const { error: rpcError } = await supabase.rpc('signup_owner_with_code', {
+        p_code: trimmedCode,
+        p_company_name: companyName,
+        p_full_name: fullName,
+        p_phone: phone,
+      })
+      if (rpcError) {
+        const code = (rpcError.message || '').toLowerCase()
+        if (code.includes('invalid_code')) throw new Error('Código de convite inválido.')
+        if (code.includes('code_already_used')) throw new Error('Este código já foi utilizado.')
+        if (code.includes('code_expired')) throw new Error('Este código expirou.')
+        if (code.includes('profile_already_exists')) throw new Error('Já existe um perfil associado a esta conta.')
+        throw rpcError
+      }
+
+      window.location.replace('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Falha ao criar conta')
     } finally {
@@ -75,110 +107,112 @@ export const SignupPage: React.FC = () => {
     }
   }
 
+  const codeBorder =
+    codeStatus.state === 'valid' ? 'border-green-500' :
+    codeStatus.state === 'invalid' ? 'border-copper' : 'border-line'
+
   return (
-    <div className="min-h-screen flex">
-      {/* Left panel - decorative */}
-      <div className="hidden lg:flex lg:w-1/2 bg-ink relative overflow-hidden flex-col justify-between p-12">
-        <div className="relative z-10">
-          <Logo variant="light" size="lg" />
-          <h1 className="mt-16 text-4xl font-extrabold text-white leading-tight">
-            Começa a gerir<br />
-            <span className="text-yellow">o teu negócio</span><br />
-            hoje mesmo.
-          </h1>
-          <p className="mt-6 text-lg text-white/60 max-w-md leading-relaxed">
-            Junta-te a dezenas de operadores de TukTuk que já usam a Tuk an App para crescer o seu negócio.
+    <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="flex justify-center mb-8">
+          <Logo />
+        </div>
+
+        <div className="bg-card border border-line rounded-2xl p-8">
+          <h1 className="text-2xl font-bold text-ink mb-2 text-center">Criar Conta</h1>
+          <p className="text-sm text-ink2 text-center mb-6">
+            Apenas por convite — introduz o código que recebeste.
           </p>
-        </div>
-
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-3 text-white/70">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-yellow" />
-            </div>
-            <span className="text-sm">Dashboard com metricas em tempo real</span>
-          </div>
-          <div className="flex items-center gap-3 text-white/70">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-              <Users className="w-5 h-5 text-yellow" />
-            </div>
-            <span className="text-sm">Gestao completa de motoristas</span>
-          </div>
-          <div className="flex items-center gap-3 text-white/70">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-yellow" />
-            </div>
-            <span className="text-sm">Reservas online automaticas</span>
-          </div>
-        </div>
-
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-yellow/5" />
-        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-copper/5" />
-      </div>
-
-      {/* Right panel - form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-cream">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden mb-10">
-            <Logo size="lg" />
-          </div>
-
-          <h2 className="text-3xl font-extrabold text-ink">Criar conta</h2>
-          <p className="mt-2 text-ink2">Preenche os dados para começar</p>
 
           {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            <div className="bg-copper bg-opacity-10 border border-copper text-copper px-4 py-3 rounded-btn mb-4 text-sm">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            {/* Invite code */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">Código de convite *</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="EX: TUKTUK2026"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  className="flex-1 px-4 py-2.5 bg-white border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-yellow/50 focus:border-yellow transition-all font-mono tracking-wider"
-                />
-                <button
-                  type="button"
-                  onClick={() => validateCode(code)}
-                  disabled={!code || codeChecking}
-                  className="px-4 py-2.5 bg-ink text-white rounded-xl text-sm font-medium hover:bg-ink/90 transition-colors disabled:opacity-50"
-                >
-                  {codeChecking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Validar'}
-                </button>
+              <label className="block text-sm font-600 text-ink mb-1">Código de Convite</label>
+              <input
+                type="text"
+                className={`w-full px-4 py-3 bg-card border ${codeBorder} rounded-btn text-ink font-mono tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-yellow`}
+                placeholder="EX: AB-2026"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                autoComplete="off"
+                required
+              />
+              <div className="mt-1 text-xs min-h-[16px]">
+                {codeStatus.state === 'checking' && <span className="text-ink2">A validar código...</span>}
+                {codeStatus.state === 'valid' && (
+                  <span className="text-green-600">
+                    ✓ Código válido{codeStatus.note ? ` — ${codeStatus.note}` : ''}
+                  </span>
+                )}
+                {codeStatus.state === 'invalid' && (
+                  <span className="text-copper">✗ {REASON_MSG[codeStatus.reason] || 'Código inválido'}</span>
+                )}
               </div>
-              {codeValid && (
-                <p className="mt-1.5 text-sm text-green flex items-center gap-1">
-                  <Check className="w-4 h-4" /> Código válido
-                </p>
-              )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Input label="Nome completo" placeholder="Joaquim Silva" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-              <Input label="Empresa" placeholder="Lisboa TukTuks" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
-            </div>
-
-            <Input label="Telefone" type="tel" placeholder="+351 912 345 678" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <Input label="Email" type="email" placeholder="tu@empresa.pt" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <Input label="Password" type="password" placeholder="Min. 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} required />
-
-            <Button type="submit" className="w-full" disabled={loading || !codeValid}>
-              {loading ? 'A criar conta...' : 'Criar conta'}
+            <Input
+              type="text"
+              label="Nome Completo"
+              placeholder="João Silva"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+            <Input
+              type="text"
+              label="Nome da Empresa"
+              placeholder="Tuk & Roll"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              required
+            />
+            <Input
+              type="tel"
+              label="Telefone"
+              placeholder="+351 9XX XXX XXX"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+            <Input
+              type="email"
+              label="Email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              type="password"
+              label="Senha"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full"
+              disabled={loading || codeStatus.state !== 'valid'}
+            >
+              {loading ? 'A criar...' : 'Criar Conta'}
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-ink2">
+          <p className="text-center text-sm text-ink2 mt-6">
             Já tens conta?{' '}
-            <Link to="/login" className="font-semibold text-copper hover:text-copper/80 transition-colors">
+            <Link to="/login" className="text-ink font-bold hover:text-copper">
               Entrar
             </Link>
+          </p>
+          <p className="text-center text-xs text-ink2 mt-2">
+            Não tens código? Contacta-nos em <a href="mailto:ops@tukanapp.pt" className="underline">ops@tukanapp.pt</a>
           </p>
         </div>
       </div>
