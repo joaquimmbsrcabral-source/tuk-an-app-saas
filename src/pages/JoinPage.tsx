@@ -51,6 +51,22 @@ export const JoinPage: React.FC = () => {
       })
       if (rpcError) throw rpcError
 
+      // Copy company default commission to new driver profile
+      const { data: company } = await supabase
+        .from('companies')
+        .select('default_commission_pct')
+        .eq('id', companyId)
+        .single()
+      if (company?.default_commission_pct != null) {
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        if (currentUser) {
+          await supabase
+            .from('profiles')
+            .update({ commission_pct: company.default_commission_pct })
+            .eq('id', currentUser.id)
+        }
+      }
+
       window.location.replace('/driver/today')
     } catch (err: any) {
       setError(err.message || 'Falha ao criar conta')
