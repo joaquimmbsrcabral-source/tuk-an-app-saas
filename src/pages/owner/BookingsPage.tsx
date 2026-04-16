@@ -7,17 +7,18 @@ import { Button } from '../../components/Button'
 import { Modal } from '../../components/Modal'
 import { Input, TextArea, Select } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
-import { Booking, TukTuk, TourCatalogItem } from '../../lib/types'
+import { Booking, TukTuk, TourCatalogItem, Profile } from '../../lib/types'
 import { formatDateTime, formatDateShort } from '../../lib/format'
-import { Plus, Trash2, Calendar } from 'lucide-react'
-import { StatusBadge } from '../../components/StatusBadge'
+import { Plus, Trash2 } from 'lucide-react'
 
 export const BookingsPage: React.FC = () => {
   const { profile } = useAuth()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [tuktuks, setTuktuks] = useState<TukTuk[]>([])
+  const [drivers, setDrivers] = useState<Profile[]>([])
   const [tours, setTours] = useState<TourCatalogItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState({
     customer_name: '',
@@ -37,6 +38,7 @@ export const BookingsPage: React.FC = () => {
     if (profile) {
       fetchBookings()
       fetchTuktuks()
+      fetchDrivers()
       fetchTours()
     }
   }, [profile])
@@ -78,6 +80,7 @@ export const BookingsPage: React.FC = () => {
         .order('start_at', { ascending: false })
       setBookings(data || [])
     } catch (err) {
+      console.error('Error fetching bookings:', err)
     } finally {
       setLoading(false)
     }
@@ -93,11 +96,32 @@ export const BookingsPage: React.FC = () => {
         .eq('status', 'active')
       setTuktuks(data || [])
     } catch (err) {
+      console.error('Error fetching tuktuks:', err)
     }
+  }
+
+  const fetchDrivers = async () => {
+    if (!profile) return
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .eq('role', 'driver')
+      setDrivers(data || [])
+    } catch (err) {
+      console.error('Error fetching drivers:', err)
+    }
+  }
+
+  const statusLabel = (s: string) => {
+    const map: Record<string, string> = { pending: 'Pendente', confirmed: 'Confirmada', in_progress: 'Em Curso', completed: 'Completa', cancelled: 'Cancelada' }
+    return map[s] || s
   }
 
   const handleSave = async () => {
     if (!profile) return
+    setSaving(true)
     try {
       await supabase
         .from('bookings')
@@ -127,6 +151,9 @@ export const BookingsPage: React.FC = () => {
         notes: '',
       })
     } catch (err) {
+      console.error('Error saving:', err)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -136,6 +163,7 @@ export const BookingsPage: React.FC = () => {
       await supabase.from('bookings').delete().eq('id', id)
       await fetchBookings()
     } catch (err) {
+      console.error('Error deleting:', err)
     }
   }
 
@@ -144,8 +172,8 @@ export const BookingsPage: React.FC = () => {
   return (
     <OwnerLayout>
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center gap-3 justify-between">
-          <h1 className="text-xl sm:text-3xl font-bold text-ink">Reservas</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-ink">Reservas</h1>
           <Button onClick={() => setIsModalOpen(true)} variant="primary">
             <Plus size={20} className="mr-2" />
             Nova Reserva
@@ -154,7 +182,7 @@ export const BookingsPage: React.FC = () => {
 
         {bookings.length === 0 ? (
           <EmptyState
-            icon={<Calendar size={24} />}
+            icon="📅"
             title="Nenhuma Reserva"
             description="Comece a adicionar reservas"
             action={{ label: 'Nova Reserva', onClick: () => setIsModalOpen(true) }}
@@ -170,7 +198,13 @@ export const BookingsPage: React.FC = () => {
                     {formatDateTime(booking.start_at)} • {booking.pax} pax
                   </p>
                   <p className="text-sm text-ink2 mb-2">Partida: {booking.pickup_location}</p>
-                   <StatusBadge status={booking.status} size="sm" />
+                  <span className={`text-xs px-2 py-1 rounded-btn ${
+                    booking.status === 'completed' ? 'bg-green bg-opacity-10 text-green' :
+                    booking.status === 'cancelled' ? 'bg-copper bg-opacity-10 text-copper' :
+                    'bg-yellow bg-opacity-10 text-ink'
+                  }`}>
+                    {statusLabel(booking.status)}
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <div className="text-right">
@@ -202,24 +236,39 @@ export const BookingsPage: React.FC = () => {
           {tours.length > 0 ? (
             <Select
               label="Tour"
+              options={[
+                { value: '', label: '\u2014 Escolhe do cat\u00e1logo \u2014' },
+                ...tours.map((t) => ({ value: t.id, label: `${t.name} \u00b7 \u20ac${Number(t.default_price).toFixed(2)}` })),
+              ]}
               value={tours.find((t) => t.name === form.tour_type)?.id || ''}
               onChange={(e) => handleSelectTour(e.target.value)}
-            >
-              <option value="">— Escolhe do catálogo —</option>
-              {tours.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} · €{Number(t.default_price).toFixed(2)}
-                </option>
-              ))}
-            </Select>
+            />
           ) : (
             <Input
               label="Tipo de Tour"
               value={form.tour_type}
               onChange={(e) => setForm({ ...form, tour_type: e.target.value })}
-              placeholder="Adiciona tours em Definições → Catálogo"
+              placeholder="Adiciona tours em Defini\u00e7\u00f5es \u2192 Cat\u00e1logo"
             />
           )}
+          <Select
+            label="Motorista"
+            options={[
+              { value: '', label: '\u2014 Sem motorista \u2014' },
+              ...drivers.map((d) => ({ value: d.id, label: d.full_name })),
+            ]}
+            value={form.driver_id}
+            onChange={(e) => setForm({ ...form, driver_id: e.target.value })}
+          />
+          <Select
+            label="TukTuk"
+            options={[
+              { value: '', label: '\u2014 Sem TukTuk \u2014' },
+              ...tuktuks.map((t) => ({ value: t.id, label: t.nickname || t.plate })),
+            ]}
+            value={form.tuktuk_id}
+            onChange={(e) => setForm({ ...form, tuktuk_id: e.target.value })}
+          />
           <Input
             label="Passageiros"
             type="number"
@@ -259,8 +308,8 @@ export const BookingsPage: React.FC = () => {
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
           />
           <div className="flex gap-2 pt-4">
-            <Button onClick={handleSave} variant="primary" className="flex-1">
-              Criar Reserva
+            <Button onClick={handleSave} variant="primary" className="flex-1" disabled={saving}>
+              {saving ? 'Criando...' : 'Criar Reserva'}
             </Button>
             <Button onClick={() => setIsModalOpen(false)} variant="ghost" className="flex-1">
               Cancelar
