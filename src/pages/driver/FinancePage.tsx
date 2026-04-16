@@ -5,6 +5,7 @@ import { DriverLayout } from '../../components/DriverLayout'
 import { Card } from '../../components/Card'
 import { Booking, StreetSale } from '../../lib/types'
 import { formatCurrency } from '../../lib/format'
+import { Trash2 } from 'lucide-react'
 import { startOfWeek, startOfMonth, subDays, parseISO, isAfter } from 'date-fns'
 
 export const DriverFinancePage: React.FC = () => {
@@ -47,9 +48,10 @@ export const DriverFinancePage: React.FC = () => {
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
   const monthStart = startOfMonth(new Date())
 
-  type Row = { date: Date; gross: number; tip: number; pax: number; isStreet: boolean }
+  type Row = { id: string; date: Date; gross: number; tip: number; pax: number; isStreet: boolean; tourName?: string }
   const rows: Row[] = [
     ...bookings.map((b) => ({
+      id: b.id,
       date: parseISO(b.end_at || b.start_at),
       gross: Number(b.price || 0),
       tip: Number(b.tip_amount || 0),
@@ -57,13 +59,27 @@ export const DriverFinancePage: React.FC = () => {
       isStreet: false,
     })),
     ...sales.map((s) => ({
+      id: s.id,
       date: parseISO(s.sold_at),
       gross: Number(s.price || 0),
       tip: Number(s.tip_amount || 0),
       pax: Number(s.pax || 0),
       isStreet: true,
+      tourName: s.tour_name,
     })),
   ]
+
+  const handleDelete = async (row: Row) => {
+    if (!row.isStreet) return
+    const label = row.tourName ? `"${row.tourName}" de ${row.date.toLocaleDateString('pt-PT')}` : `venda de ${row.date.toLocaleDateString('pt-PT')}`
+    if (!window.confirm(`Apagar a venda ${label} (${formatCurrency(row.gross)})?`)) return
+    const { error } = await supabase.from('street_sales').delete().eq('id', row.id)
+    if (error) {
+      alert('Erro ao apagar: ' + error.message)
+      return
+    }
+    setSales((prev) => prev.filter((s) => s.id !== row.id))
+  }
 
   const sum = (filterFn: (r: Row) => boolean) => {
     const f = rows.filter(filterFn)
@@ -100,7 +116,7 @@ export const DriverFinancePage: React.FC = () => {
             <Stat label="Tours" value={week.count.toString()} />
             <Stat label="Vendas brutas" value={formatCurrency(week.gross)} />
             <Stat label="Comissão" value={formatCurrency(week.commission)} />
-            <Stat label="Gorjetas " value={formatCurrency(week.tips)} />
+            <Stat label="Gorjetas 🤫" value={formatCurrency(week.tips)} />
           </div>
           <div className="border-t border-line mt-3 pt-3">
             <Stat label="Total a receber" value={formatCurrency(week.total)} accent />
@@ -113,7 +129,7 @@ export const DriverFinancePage: React.FC = () => {
             <Stat label="Tours" value={month.count.toString()} />
             <Stat label="Vendas brutas" value={formatCurrency(month.gross)} />
             <Stat label="Comissão" value={formatCurrency(month.commission)} />
-            <Stat label="Gorjetas " value={formatCurrency(month.tips)} />
+            <Stat label="Gorjetas 🤫" value={formatCurrency(month.tips)} />
           </div>
           <div className="border-t border-line mt-3 pt-3">
             <Stat label="Total a receber" value={formatCurrency(month.total)} accent />
@@ -140,17 +156,27 @@ export const DriverFinancePage: React.FC = () => {
                 .sort((a, b) => b.date.getTime() - a.date.getTime())
                 .slice(0, 15)
                 .map((r, i) => (
-                  <li key={i} className="py-2 flex items-center justify-between text-sm">
-                    <div>
+                  <li key={r.id || i} className="py-2 flex items-center justify-between text-sm gap-2">
+                    <div className="flex-1 min-w-0">
                       <p className="text-ink">
-                        {r.isStreet ? 'Rua' : 'Reserva'} · {r.pax}p
+                        {r.isStreet ? '🚶 Rua' : '📅 Reserva'}{r.tourName ? ` · ${r.tourName}` : ''} · {r.pax}p
                       </p>
                       <p className="text-xs text-ink2">{r.date.toLocaleDateString('pt-PT')}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-ink">{formatCurrency(r.gross)}</p>
-                      {r.tip > 0 && <p className="text-xs text-green">+{formatCurrency(r.tip)} </p>}
+                      {r.tip > 0 && <p className="text-xs text-green">+{formatCurrency(r.tip)} 🤫</p>}
                     </div>
+                    {r.isStreet && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(r)}
+                        className="ml-1 p-2 rounded-xl text-ink2 hover:text-copper hover:bg-copper hover:bg-opacity-10 transition-colors active:scale-90"
+                        title="Apagar venda"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </li>
                 ))}
             </ul>
