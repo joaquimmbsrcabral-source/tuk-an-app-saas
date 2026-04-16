@@ -6,7 +6,7 @@ import { DriverLayout } from '../../components/DriverLayout'
 import { Card } from '../../components/Card'
 import { Button } from '../../components/Button'
 import { Input, Select, TextArea } from '../../components/Input'
-import { ArrowLeft, Clock, Users, Minus, Plus } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Users, Minus, Plus } from 'lucide-react'
 
 const DEFAULT_TOURS = [
   { name: 'Histórico', duration_min: 120, price: 180, emoji: '🏰' },
@@ -30,6 +30,7 @@ export const StreetSalePage: React.FC = () => {
   const { profile } = useAuth()
   const [saving, setSaving] = useState(false)
   const [selectedTourIdx, setSelectedTourIdx] = useState<number | null>(null)
+  const todayStr = new Date().toISOString().slice(0, 10)
   const [form, setForm] = useState({
     tour_name: '',
     duration_min: 120,
@@ -38,6 +39,7 @@ export const StreetSalePage: React.FC = () => {
     payment_method: 'cash',
     tip_amount: 0,
     notes: '',
+    sold_date: todayStr,
   })
 
   const selectTour = (idx: number) => {
@@ -81,7 +83,7 @@ export const StreetSalePage: React.FC = () => {
         payment_method: form.payment_method,
         tip_amount: form.tip_amount,
         notes: form.notes || null,
-        sold_at: new Date().toISOString(),
+        sold_at: new Date(form.sold_date + 'T12:00:00').toISOString(),
       },
     ])
     setSaving(false)
@@ -142,8 +144,23 @@ export const StreetSalePage: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Tour Name (editable) */}
+          {/* Tour Details */}
           <Card>
+            {/* Date */}
+            <div className="mb-4">
+              <label className="block text-sm font-600 text-ink mb-2">
+                <Calendar size={14} className="inline mr-1 -mt-0.5" />
+                Data da venda
+              </label>
+              <input
+                type="date"
+                value={form.sold_date}
+                max={todayStr}
+                onChange={(e) => setForm({ ...form, sold_date: e.target.value })}
+                className="w-full px-4 py-3 border border-line rounded-btn font-outfit focus:outline-none focus:border-copper"
+              />
+            </div>
+
             <Input
               label="Nome do tour"
               value={form.tour_name}
