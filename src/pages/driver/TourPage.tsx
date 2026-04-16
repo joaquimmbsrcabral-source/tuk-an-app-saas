@@ -175,7 +175,7 @@ export const TourPage: React.FC = () => {
             step="0.01"
           />
           <Input
-            label="Gorjeta (€) — só tu vês "
+            label="Gorjeta (\u20ac) \u2014 s\u00f3 tu v\u00eas \ud83e\udd2b"
             type="number"
             value={endForm.tipAmount}
             onChange={(e) => setEndForm({ ...endForm, tipAmount: parseFloat(e.target.value) || 0 })}
