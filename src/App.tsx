@@ -1,6 +1,10 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { inject } from '@vercel/analytics'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+
+// Initialize Vercel Web Analytics
+inject()
 
 // Auth Pages
 import { LoginPage } from './pages/LoginPage'
