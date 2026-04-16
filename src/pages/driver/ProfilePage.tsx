@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -15,6 +15,19 @@ export const ProfilePage: React.FC = () => {
     phone: profile?.phone || '',
   })
   const [saving, setSaving] = useState(false)
+  const [companyName, setCompanyName] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!profile?.company_id) return
+    supabase
+      .from('companies')
+      .select('name')
+      .eq('id', profile.company_id)
+      .single()
+      .then(({ data }) => {
+        if (data) setCompanyName(data.name)
+      })
+  }, [profile?.company_id])
 
   const handleSave = async () => {
     if (!profile) return
@@ -67,7 +80,8 @@ export const ProfilePage: React.FC = () => {
 
         <Card>
           <h2 className="text-lg font-bold text-ink mb-2">Empresa</h2>
-          <p className="text-sm text-ink2 mb-4">Company ID: {profile?.company_id}</p>
+          <p className="text-base font-600 text-ink mb-1">{companyName || '...'}</p>
+          <p className="text-xs text-ink2">Comissão: {profile?.commission_pct ?? 0}%</p>
         </Card>
 
         <Button onClick={handleSignOut} variant="secondary" className="w-full">
