@@ -21,6 +21,7 @@ import { FinancePage } from './pages/owner/FinancePage'
 import { SettingsPage } from './pages/owner/SettingsPage'
 import { OwnerSchedulePage } from './pages/owner/SchedulePage'
 import { SupportPage } from './pages/owner/SupportPage'
+import { PromoCodesPage } from './pages/owner/PromoCodesPage'
 import { AdminPage } from './pages/admin/AdminPage'
 
 // Components
@@ -89,6 +90,7 @@ export default function App() {
             <Route path="/reservas" element={<OwnerRoute><BookingsPage /></OwnerRoute>} />
             <Route path="/motoristas" element={<OwnerRoute><DriversPage /></OwnerRoute>} />
             <Route path="/financas" element={<OwnerRoute><FinancePage /></OwnerRoute>} />
+            <Route path="/codigos" element={<OwnerRoute><PromoCodesPage /></OwnerRoute>} />
             <Route path="/definicoes" element={<OwnerRoute><SettingsPage /></OwnerRoute>} />
             <Route path="/escala" element={<OwnerRoute><OwnerSchedulePage /></OwnerRoute>} />
             <Route path="/suporte" element={<OwnerRoute><SupportPage /></OwnerRoute>} />
