@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { OwnerLayout } from '../../components/OwnerLayout'
@@ -9,14 +10,14 @@ import { Input, TextArea, Select } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { TukTuk } from '../../lib/types'
 import { formatDate } from '../../lib/format'
-import { AlertCircle, Plus, Trash2 } from 'lucide-react'
+import { AlertCircle, Plus, Wrench, CheckCircle, XCircle, ChevronRight } from 'lucide-react'
 
 export const FleetPage: React.FC = () => {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const [tuktuks, setTuktuks] = useState<TukTuk[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     plate: '',
@@ -53,16 +54,11 @@ export const FleetPage: React.FC = () => {
     if (!profile) return
     setSaving(true)
     try {
-      if (editingId) {
-        await supabase.from('tuktuks').update(form).eq('id', editingId)
-      } else {
-        await supabase
-          .from('tuktuks')
-          .insert([{ ...form, company_id: profile.company_id, km: parseInt(form.km.toString()) }])
-      }
+      await supabase
+        .from('tuktuks')
+        .insert([{ ...form, company_id: profile.company_id, km: parseInt(form.km.toString()) }])
       await fetchTuktuks()
       setIsModalOpen(false)
-      setEditingId(null)
       setForm({ plate: '', nickname: '', status: 'active', color: '', km: 0, insurance_expiry: '', next_service_km: 0, notes: '' })
     } catch (err) {
       console.error('Error saving:', err)
@@ -71,35 +67,22 @@ export const FleetPage: React.FC = () => {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza?')) return
-    try {
-      await supabase.from('tuktuks').delete().eq('id', id)
-      await fetchTuktuks()
-    } catch (err) {
-      console.error('Error deleting:', err)
-    }
-  }
-
-  const handleEdit = (tk: TukTuk) => {
-    setEditingId(tk.id)
-    setForm({
-      plate: tk.plate,
-      nickname: tk.nickname,
-      status: tk.status,
-      color: tk.color,
-      km: tk.km,
-      insurance_expiry: tk.insurance_expiry,
-      next_service_km: tk.next_service_km,
-      notes: tk.notes,
-    })
-    setIsModalOpen(true)
-  }
-
   const openNewModal = () => {
-    setEditingId(null)
     setForm({ plate: '', nickname: '', status: 'active', color: '', km: 0, insurance_expiry: '', next_service_km: 0, notes: '' })
     setIsModalOpen(true)
+  }
+
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case 'active':
+        return { label: 'Ativo', bg: 'bg-green bg-opacity-10', text: 'text-green', icon: CheckCircle }
+      case 'maintenance':
+        return { label: 'Manuten\u00e7\u00e3o', bg: 'bg-yellow bg-opacity-20', text: 'text-ink', icon: Wrench }
+      case 'retired':
+        return { label: 'Reformado', bg: 'bg-copper bg-opacity-10', text: 'text-copper', icon: XCircle }
+      default:
+        return { label: status, bg: 'bg-line', text: 'text-ink2', icon: AlertCircle }
+    }
   }
 
   if (loading) return <OwnerLayout><div className="text-center py-12">Carregando...</div></OwnerLayout>
@@ -108,7 +91,10 @@ export const FleetPage: React.FC = () => {
     <OwnerLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-ink">Frota</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-ink">Frota</h1>
+            <p className="text-ink2 mt-1">{tuktuks.length} TukTuk{tuktuks.length !== 1 ? 's' : ''} registado{tuktuks.length !== 1 ? 's' : ''}</p>
+          </div>
           <Button onClick={openNewModal} variant="primary">
             <Plus size={20} className="mr-2" />
             Novo TukTuk
@@ -117,58 +103,85 @@ export const FleetPage: React.FC = () => {
 
         {tuktuks.length === 0 ? (
           <EmptyState
-            icon="🛺"
+            icon="\ud83d\udefa"
             title="Nenhum TukTuk"
-            description="Comece a adicionar seus TukTuks à frota"
+            description="Comece a adicionar seus TukTuks \u00e0 frota"
             action={{ label: 'Adicionar TukTuk', onClick: openNewModal }}
           />
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {tuktuks.map((tk) => {
-              const insuranceExpiring = new Date(tk.insurance_expiry) < new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000)
-              const serviceNeeded = tk.km >= tk.next_service_km - 500
+              const statusConfig = getStatusConfig(tk.status)
+              const StatusIcon = statusConfig.icon
+              const insuranceExpiring = tk.insurance_expiry && new Date(tk.insurance_expiry) < new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000)
+              const serviceNeeded = tk.next_service_km > 0 && tk.km >= tk.next_service_km - 500
 
               return (
-                <Card key={tk.id} className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-ink mb-1">{tk.nickname}</h3>
-                    <p className="text-sm text-ink2 mb-2">Matrícula: {tk.plate}</p>
-                    <p className="text-sm text-ink2 mb-2">Cor: {tk.color} | KM: {tk.km}</p>
-                    <div className="flex gap-2 flex-wrap">
-                      <span className={`text-xs px-2 py-1 rounded-btn ${tk.status === 'active' ? 'bg-green bg-opacity-10 text-green' : tk.status === 'maintenance' ? 'bg-yellow bg-opacity-10 text-ink' : 'bg-copper bg-opacity-10 text-copper'}`}>
-                        {tk.status === 'active' ? 'Ativo' : tk.status === 'maintenance' ? 'Manuten\u00e7\u00e3o' : tk.status === 'retired' ? 'Reformado' : tk.status}
-                      </span>
-                      {insuranceExpiring && (
-                        <span className="text-xs px-2 py-1 rounded-btn bg-copper bg-opacity-10 text-copper flex items-center gap-1">
-                          <AlertCircle size={14} /> Seguro expira: {formatDate(tk.insurance_expiry)}
-                        </span>
-                      )}
-                      {serviceNeeded && (
-                        <span className="text-xs px-2 py-1 rounded-btn bg-copper bg-opacity-10 text-copper flex items-center gap-1">
-                          <AlertCircle size={14} /> Serviço em {tk.next_service_km - tk.km} KM
-                        </span>
-                      )}
+                <div
+                  key={tk.id}
+                  onClick={() => navigate(`/frota/${tk.id}`)}
+                  className="bg-card border border-line rounded-btn p-5 cursor-pointer hover:border-yellow hover:shadow-md transition-all group"
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-yellow bg-opacity-20 rounded-btn flex items-center justify-center text-2xl">
+                        {'\ud83d\udefa'}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-ink group-hover:text-yellow transition-colors">{tk.nickname}</h3>
+                        <p className="text-sm text-ink2">{tk.plate}</p>
+                      </div>
                     </div>
+                    <ChevronRight size={20} className="text-ink2 group-hover:text-yellow transition-colors mt-1" />
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={() => handleEdit(tk)} variant="ghost" size="sm">
-                      Editar
-                    </Button>
-                    <Button onClick={() => handleDelete(tk.id)} variant="secondary" size="sm">
-                      <Trash2 size={16} />
-                    </Button>
+
+                  {/* Info row */}
+                  <div className="flex items-center gap-4 mb-4 text-sm text-ink2">
+                    {tk.color && <span>{tk.color}</span>}
+                    <span>{tk.km.toLocaleString()} km</span>
                   </div>
-                </Card>
+
+                  {/* Status + alerts */}
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-btn font-medium ${statusConfig.bg} ${statusConfig.text}`}>
+                      <StatusIcon size={13} />
+                      {statusConfig.label}
+                    </span>
+
+                    {insuranceExpiring && (
+                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-btn bg-copper bg-opacity-10 text-copper font-medium">
+                        <AlertCircle size={13} />
+                        Seguro
+                      </span>
+                    )}
+
+                    {serviceNeeded && (
+                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-btn bg-copper bg-opacity-10 text-copper font-medium">
+                        <Wrench size={13} />
+                        Revis\u00e3o
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Bottom info */}
+                  {tk.insurance_expiry && (
+                    <div className="mt-4 pt-3 border-t border-line text-xs text-ink2">
+                      Seguro: {formatDate(tk.insurance_expiry)}
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Editar TukTuk' : 'Novo TukTuk'}>
+      {/* New TukTuk Modal */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo TukTuk">
         <div className="space-y-4">
           <Input
-            label="Matrícula"
+            label="Matr\u00edcula"
             value={form.plate}
             onChange={(e) => setForm({ ...form, plate: e.target.value })}
             placeholder="XX-XX-XX"
@@ -194,7 +207,7 @@ export const FleetPage: React.FC = () => {
             onChange={(e) => setForm({ ...form, km: parseInt(e.target.value) || 0 })}
           />
           <Input
-            label="Próxima Manutenção (KM)"
+            label="Pr\u00f3xima Manuten\u00e7\u00e3o (KM)"
             type="number"
             value={form.next_service_km}
             onChange={(e) => setForm({ ...form, next_service_km: parseInt(e.target.value) || 0 })}
@@ -209,7 +222,7 @@ export const FleetPage: React.FC = () => {
             label="Status"
             options={[
               { value: 'active', label: 'Ativo' },
-              { value: 'maintenance', label: 'Manutenção' },
+              { value: 'maintenance', label: 'Manuten\u00e7\u00e3o' },
               { value: 'retired', label: 'Reformado' },
             ]}
             value={form.status}
