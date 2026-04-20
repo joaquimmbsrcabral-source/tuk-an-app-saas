@@ -8,7 +8,7 @@ import { Modal } from '../../components/Modal'
 import { Input, TextArea, Select } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { Booking, TukTuk, TourCatalogItem, Profile } from '../../lib/types'
-import { formatDateTime, formatDateShort } from '../../lib/format'
+import { formatDateTime, formatDateShort, formatCurrency } from '../../lib/format'
 import { Plus, Trash2 } from 'lucide-react'
 
 export const BookingsPage: React.FC = () => {
@@ -208,7 +208,7 @@ export const BookingsPage: React.FC = () => {
                 </div>
                 <div className="flex gap-2">
                   <div className="text-right">
-                    <p className="font-bold text-ink">€{booking.price.toFixed(2)}</p>
+                    <p className="font-bold text-ink">{formatCurrency(booking.price)}</p>
                   </div>
                   <Button onClick={() => handleDelete(booking.id)} variant="secondary" size="sm">
                     <Trash2 size={16} />
@@ -238,7 +238,7 @@ export const BookingsPage: React.FC = () => {
               label="Tour"
               options={[
                 { value: '', label: '\u2014 Escolhe do cat\u00e1logo \u2014' },
-                ...tours.map((t) => ({ value: t.id, label: `${t.name} \u00b7 \u20ac${Number(t.default_price).toFixed(2)}` })),
+                ...tours.map((t) => ({ value: t.id, label: `${t.name} \u00b7 ${formatCurrency(Number(t.default_price))}` })),
               ]}
               value={tours.find((t) => t.name === form.tour_type)?.id || ''}
               onChange={(e) => handleSelectTour(e.target.value)}
