@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { OwnerLayout } from '../../components/OwnerLayout'
@@ -10,10 +10,20 @@ import { Payment, StreetSale } from '../../lib/types'
 import { formatCurrency, formatDate } from '../../lib/format'
 import { Download } from 'lucide-react'
 
+type FinanceEntry = {
+  id: string
+  type: 'payment' | 'street_sale'
+  date: string
+  amount: number
+  method: string
+  driverId: string
+  notes: string
+  tourName?: string
+}
+
 export const FinancePage: React.FC = () => {
   const { profile } = useAuth()
   const [payments, setPayments] = useState<Payment[]>([])
-  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
     method: '',
@@ -32,10 +42,6 @@ export const FinancePage: React.FC = () => {
       fetchStreetSales()
     }
   }, [profile])
-
-  useEffect(() => {
-    applyFilters()
-  }, [payments, filters])
 
   const fetchPayments = async () => {
     if (!profile) return
@@ -81,45 +87,71 @@ export const FinancePage: React.FC = () => {
     setStreetSales(data || [])
   }
 
-  const applyFilters = () => {
-    let filtered = payments
+  const entries: FinanceEntry[] = useMemo(() => {
+    const paymentEntries: FinanceEntry[] = payments.map((p) => ({
+      id: p.id,
+      type: 'payment',
+      date: p.received_at,
+      amount: p.amount,
+      method: p.method,
+      driverId: p.received_by,
+      notes: p.notes || '',
+    }))
+    const saleEntries: FinanceEntry[] = streetSales.map((s) => ({
+      id: s.id,
+      type: 'street_sale',
+      date: s.sold_at,
+      amount: s.price,
+      method: s.payment_method,
+      driverId: s.driver_id,
+      notes: s.notes || '',
+      tourName: s.tour_name,
+    }))
+    return [...paymentEntries, ...saleEntries].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    )
+  }, [payments, streetSales])
 
+  const filteredEntries = useMemo(() => {
+    let filtered = entries
     if (filters.method) {
-      filtered = filtered.filter((p) => p.method === filters.method)
+      filtered = filtered.filter((e) => e.method === filters.method)
     }
-
     if (filters.driver) {
-      filtered = filtered.filter((p) => p.received_by === filters.driver)
+      filtered = filtered.filter((e) => e.driverId === filters.driver)
     }
-
     if (filters.startDate) {
-      filtered = filtered.filter((p) => new Date(p.received_at) >= new Date(filters.startDate))
+      filtered = filtered.filter((e) => new Date(e.date) >= new Date(filters.startDate))
     }
-
     if (filters.endDate) {
       const endDate = new Date(filters.endDate)
       endDate.setHours(23, 59, 59)
-      filtered = filtered.filter((p) => new Date(p.received_at) <= endDate)
+      filtered = filtered.filter((e) => new Date(e.date) <= endDate)
     }
-
-    setFilteredPayments(filtered)
-  }
+    return filtered
+  }, [entries, filters])
 
   const methodLabel = (m: string) => {
-    const map: Record<string, string> = { cash: 'Dinheiro', card: 'Cart\u00e3o', mbway: 'MB Way', transfer: 'Transfer\u00eancia', other: 'Outro' }
+    const map: Record<string, string> = {
+      cash: 'Dinheiro',
+      card: 'Cartão',
+      mbway: 'MB Way',
+      transfer: 'Transferência',
+      other: 'Outro',
+    }
     return map[m] || m
   }
 
   const exportCSV = () => {
-    const headers = ['Data', 'M\u00e9todo', 'Motorista', 'Valor', 'Notas']
-    const rows = filteredPayments.map((p) => [
-      formatDate(p.received_at),
-      methodLabel(p.method),
-      driverNames[p.received_by] || p.received_by,
-      formatCurrency(p.amount),
-      p.notes,
+    const headers = ['Data', 'Tipo', 'Método', 'Motorista', 'Valor', 'Notas']
+    const rows = filteredEntries.map((e) => [
+      formatDate(e.date),
+      e.type === 'street_sale' ? 'Venda de Rua' : 'Pagamento',
+      methodLabel(e.method),
+      driverNames[e.driverId] || e.driverId,
+      formatCurrency(e.amount),
+      e.notes,
     ])
-
     const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
@@ -131,14 +163,14 @@ export const FinancePage: React.FC = () => {
 
   if (loading) return <OwnerLayout><div className="text-center py-12">Carregando...</div></OwnerLayout>
 
-  const total = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
+  const total = filteredEntries.reduce((sum, e) => sum + e.amount, 0)
 
   return (
     <OwnerLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-ink">Finanças</h1>
-          {(filteredPayments.length > 0) && (
+          {(filteredEntries.length > 0) && (
             <Button onClick={exportCSV} variant="ghost">
               <Download size={20} className="mr-2" />
               Exportar CSV
@@ -182,6 +214,7 @@ export const FinancePage: React.FC = () => {
             onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
           />
         </div>
+
         {(filters.method || filters.driver || filters.startDate || filters.endDate) && (
           <button
             onClick={() => setFilters({ method: '', driver: '', startDate: '', endDate: '' })}
@@ -191,11 +224,11 @@ export const FinancePage: React.FC = () => {
           </button>
         )}
 
-        {filteredPayments.length === 0 ? (
+        {filteredEntries.length === 0 ? (
           <EmptyState
             icon="💰"
-            title="Nenhum Pagamento"
-            description="Nenhum pagamento encontrado com os filtros selecionados"
+            title="Nenhum Registo"
+            description="Nenhum pagamento ou venda de rua encontrado com os filtros selecionados"
           />
         ) : (
           <>
@@ -205,22 +238,34 @@ export const FinancePage: React.FC = () => {
             </Card>
 
             <div className="grid grid-cols-1 gap-4">
-              {filteredPayments.map((payment) => (
-                <Card key={payment.id} className="flex items-start justify-between">
+              {filteredEntries.map((entry) => (
+                <Card key={entry.id} className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-ink mb-1">{driverNames[payment.received_by] || payment.received_by}</h3>
-                    <p className="text-sm text-ink2 mb-2">{formatDate(payment.received_at)}</p>
-                    <div className="flex gap-2">
+                    <h3 className="text-lg font-bold text-ink mb-1">
+                      {driverNames[entry.driverId] || entry.driverId}
+                    </h3>
+                    <p className="text-sm text-ink2 mb-2">{formatDate(entry.date)}</p>
+                    <div className="flex gap-2 flex-wrap">
                       <span className="text-xs px-2 py-1 rounded-btn bg-line bg-opacity-50 text-ink">
-                        {methodLabel(payment.method)}
+                        {methodLabel(entry.method)}
                       </span>
-                      {payment.notes && (
-                        <p className="text-xs text-ink2">{payment.notes}</p>
+                      {entry.type === 'street_sale' && (
+                        <span className="text-xs px-2 py-1 rounded-btn bg-yellow bg-opacity-20 text-ink font-medium">
+                          Venda de Rua
+                        </span>
+                      )}
+                      {entry.tourName && (
+                        <span className="text-xs px-2 py-1 rounded-btn bg-copper bg-opacity-10 text-copper">
+                          {entry.tourName}
+                        </span>
+                      )}
+                      {entry.notes && (
+                        <p className="text-xs text-ink2">{entry.notes}</p>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-ink text-lg">{formatCurrency(payment.amount)}</p>
+                    <p className="font-bold text-ink text-lg">{formatCurrency(entry.amount)}</p>
                   </div>
                 </Card>
               ))}
