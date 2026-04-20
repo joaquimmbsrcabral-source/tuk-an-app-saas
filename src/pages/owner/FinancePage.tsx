@@ -94,6 +94,12 @@ export const FinancePage: React.FC = () => {
     setStreetSales(data || [])
   }
 
+  const parseTipFromNotes = (notes: string): number => {
+    const match = notes.match(/[Gg]orjeta:\s*([\d.,]+)/)
+    if (match) return parseFloat(match[1].replace(',', '.')) || 0
+    return 0
+  }
+
   const entries: FinanceEntry[] = useMemo(() => {
     const paymentEntries: FinanceEntry[] = payments.map((p) => ({
       id: p.id,
@@ -103,6 +109,7 @@ export const FinancePage: React.FC = () => {
       method: p.method,
       driverId: p.received_by,
       notes: p.notes || '',
+      tipAmount: parseTipFromNotes(p.notes || ''),
     }))
     const saleEntries: FinanceEntry[] = streetSales.map((s) => ({
       id: s.id,
