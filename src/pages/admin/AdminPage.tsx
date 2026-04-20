@@ -77,7 +77,7 @@ export const AdminPage: React.FC = () => {
       const { data: profiles } = await supabase.from('profiles').select('id,company_id,role')
       const { data: tuktuks } = await supabase.from('tuktuks').select('id,company_id')
       const { data: bookings } = await supabase.from('bookings').select('id,company_id,price,status')
-      const { data: streetSales } = await supabase.from('street_sales').select('id,company_id,amount')
+      const { data: streetSales } = await supabase.from('street_sales').select('id,company_id,price')
 
       const result: CompanyRow[] = (companies || []).map((c: any) => {
         const cps = (profiles || []).filter((p: any) => p.company_id === c.id)
@@ -95,7 +95,7 @@ export const AdminPage: React.FC = () => {
           bookings: cbk.length,
           revenue: cbk.filter((b: any) => b.status === 'completed').reduce((s: number, b: any) => s + Number(b.price || 0), 0),
           street_sales_count: css.length,
-          street_sales_revenue: css.reduce((s: number, ss: any) => s + Number(ss.amount || 0), 0),
+          street_sales_revenue: css.reduce((s: number, ss: any) => s + Number(ss.price || 0), 0),
           payment_status: createdDays < 30 ? 'trial' : 'unknown',
         }
       })
