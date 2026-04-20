@@ -120,7 +120,7 @@ export const DashboardPage: React.FC = () => {
           const bookingPayments = payments?.filter((p) => p.booking_id === b.id) || []
           const bookingTotal = bookingPayments.reduce((sum, p) => sum + p.amount, 0)
           if (!tuktukRevenue[b.tuktuk_id]) {
-            tuktukRevenue[b.tuktuk_id] = { nickname: b.id, amount: 0 }
+            tuktukRevenue[b.tuktuk_id] = { nickname: b.tuktuk_id, amount: 0 }
           }
           tuktukRevenue[b.tuktuk_id].amount += bookingTotal
         })
