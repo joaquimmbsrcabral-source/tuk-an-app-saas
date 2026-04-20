@@ -9,6 +9,7 @@ import { EmptyState } from '../../components/EmptyState'
 import { Modal } from '../../components/Modal'
 import { TourCatalogItem } from '../../lib/types'
 import { Plus, Trash2, Edit2, Map } from 'lucide-react'
+import { formatCurrency } from '../../lib/format'
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useAuth()
@@ -189,7 +190,7 @@ export const SettingsPage: React.FC = () => {
                     </div>
                     {t.description && <p className="text-sm text-ink2 mb-1">{t.description}</p>}
                     <p className="text-sm text-ink2">
-                      €{Number(t.default_price).toFixed(2)} · {t.default_duration_min} min
+                      {formatCurrency(Number(t.default_price))} · {t.default_duration_min} min
                     </p>
                   </div>
                   <div className="flex gap-1">
