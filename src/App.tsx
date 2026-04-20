@@ -6,6 +6,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 // Initialize Vercel Web Analytics
 inject()
 
+// Public Pages
+import { LandingPage } from './pages/LandingPage'
+
 // Auth Pages
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
@@ -14,14 +17,12 @@ import { JoinPage } from './pages/JoinPage'
 // Owner Pages
 import { DashboardPage } from './pages/owner/DashboardPage'
 import { FleetPage } from './pages/owner/FleetPage'
-import { TukTukDetailPage } from './pages/owner/TukTukDetailPage'
 import { BookingsPage } from './pages/owner/BookingsPage'
 import { DriversPage } from './pages/owner/DriversPage'
 import { FinancePage } from './pages/owner/FinancePage'
 import { SettingsPage } from './pages/owner/SettingsPage'
 import { OwnerSchedulePage } from './pages/owner/SchedulePage'
 import { SupportPage } from './pages/owner/SupportPage'
-import { PromoCodesPage } from './pages/owner/PromoCodesPage'
 import { AdminPage } from './pages/admin/AdminPage'
 
 // Components
@@ -75,43 +76,43 @@ const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 export default function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <AuthProvider>
-          <Routes>
-            {/* Auth Routes */}
-            <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
-            <Route path="/signup" element={<AuthLayout><SignupPage /></AuthLayout>} />
-            <Route path="/join" element={<AuthLayout><JoinPage /></AuthLayout>} />
+    <Router>
+      <AuthProvider>
+        <Routes>
+          {/* Public Landing Page */}
+          <Route path="/" element={<LandingPage />} />
 
-            {/* Owner Routes */}
-            <Route path="/dashboard" element={<OwnerRoute><DashboardPage /></OwnerRoute>} />
-            <Route path="/frota" element={<OwnerRoute><FleetPage /></OwnerRoute>} />
-            <Route path="/frota/:id" element={<OwnerRoute><TukTukDetailPage /></OwnerRoute>} />
-            <Route path="/reservas" element={<OwnerRoute><BookingsPage /></OwnerRoute>} />
-            <Route path="/motoristas" element={<OwnerRoute><DriversPage /></OwnerRoute>} />
-            <Route path="/financas" element={<OwnerRoute><FinancePage /></OwnerRoute>} />
-            <Route path="/codigos" element={<OwnerRoute><PromoCodesPage /></OwnerRoute>} />
-            <Route path="/definicoes" element={<OwnerRoute><SettingsPage /></OwnerRoute>} />
-            <Route path="/escala" element={<OwnerRoute><OwnerSchedulePage /></OwnerRoute>} />
-            <Route path="/suporte" element={<OwnerRoute><SupportPage /></OwnerRoute>} />
-            <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+          {/* Auth Routes */}
+          <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
+          <Route path="/signup" element={<AuthLayout><SignupPage /></AuthLayout>} />
+          <Route path="/join" element={<AuthLayout><JoinPage /></AuthLayout>} />
 
-            {/* Driver Routes */}
-            <Route path="/driver/today" element={<DriverRoute><TodayPage /></DriverRoute>} />
-            <Route path="/driver/tour/:id" element={<DriverRoute><TourPage /></DriverRoute>} />
-            <Route path="/driver/street-sale" element={<DriverRoute><StreetSalePage /></DriverRoute>} />
-            <Route path="/driver/finance" element={<DriverRoute><DriverFinancePage /></DriverRoute>} />
-            <Route path="/driver/schedule" element={<DriverRoute><DriverSchedulePage /></DriverRoute>} />
-            <Route path="/driver/history" element={<Navigate to="/driver/finance" replace />} />
-            <Route path="/driver/profile" element={<DriverRoute><ProfilePage /></DriverRoute>} />
+          {/* Owner Routes */}
+          <Route path="/dashboard" element={<OwnerRoute><DashboardPage /></OwnerRoute>} />
+          <Route path="/frota" element={<OwnerRoute><FleetPage /></OwnerRoute>} />
+          <Route path="/reservas" element={<OwnerRoute><BookingsPage /></OwnerRoute>} />
+          <Route path="/motoristas" element={<OwnerRoute><DriversPage /></OwnerRoute>} />
+          <Route path="/financas" element={<OwnerRoute><FinancePage /></OwnerRoute>} />
+          <Route path="/definicoes" element={<OwnerRoute><SettingsPage /></OwnerRoute>} />
+          <Route path="/escala" element={<OwnerRoute><OwnerSchedulePage /></OwnerRoute>} />
+          <Route path="/suporte" element={<OwnerRoute><SupportPage /></OwnerRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
-            {/* Fallback */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-          <SupportWidget />
-        </AuthProvider>
-      </Router>
+          {/* Driver Routes */}
+          <Route path="/driver/today" element={<DriverRoute><TodayPage /></DriverRoute>} />
+          <Route path="/driver/tour/:id" element={<DriverRoute><TourPage /></DriverRoute>} />
+          <Route path="/driver/street-sale" element={<DriverRoute><StreetSalePage /></DriverRoute>} />
+          <Route path="/driver/finance" element={<DriverRoute><DriverFinancePage /></DriverRoute>} />
+          <Route path="/driver/schedule" element={<DriverRoute><DriverSchedulePage /></DriverRoute>} />
+          <Route path="/driver/history" element={<Navigate to="/driver/finance" replace />} />
+          <Route path="/driver/profile" element={<DriverRoute><ProfilePage /></DriverRoute>} />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <SupportWidget />
+      </AuthProvider>
+    </Router>
     </ErrorBoundary>
   )
 }
