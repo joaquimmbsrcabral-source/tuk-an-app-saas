@@ -1,110 +1,92 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
-import { MapPin, Clock, Users, Star, ChevronRight, Phone, Mail, Instagram, MessageCircle } from 'lucide-react'
+import { BarChart3, CalendarDays, Users, Car, Wallet, MessageCircle, Shield, Smartphone, ChevronRight, CheckCircle, ArrowRight, Star, Zap } from 'lucide-react'
 
-const WHATSAPP_NUMBER = '351910000000' // TODO: Replace with real number
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de reservar um tour de TukTuk em Lisboa.')}`
-
-const tours = [
+const features = [
   {
-    id: 'historico',
-    name: 'Tour Histórico',
-    emoji: '\u{1F3DB}',
-    tagline: 'A alma de Lisboa',
-    description: 'Descubra a Lisboa antiga — Alfama, Sé Catedral, Castelo de São Jorge, Mouraria e os melhores miradouros. Uma viagem no tempo pelas ruas mais autênticas da cidade.',
-    highlights: ['Alfama & Mouraria', 'Castelo de São Jorge', 'Sé Catedral', 'Miradouros panorâmicos', 'Graça & Chiado'],
-    duration: '1h30',
-    price: 60,
-    maxPeople: 3,
+    icon: CalendarDays,
+    title: 'Reservas & Agenda',
+    description: 'Gerencie todas as reservas num calendário visual. Receba notificações, evite conflitos de horário e nunca perca um cliente.',
   },
   {
-    id: 'nova-lisboa',
-    name: 'Nova Lisboa',
-    emoji: '\u{1F306}',
-    tagline: 'A cidade que reinventou',
-    description: 'Explore os bairros mais trendy de Lisboa — Santos, Príncipe Real, Bairro Alto e Avenida da Liberdade. Arte urbana, rooftops e a energia moderna da capital.',
-    highlights: ['Santos Design District', 'Príncipe Real', 'Bairro Alto', 'Av. da Liberdade', 'Estrela & Jardim'],
-    duration: '1h30',
-    price: 60,
-    maxPeople: 3,
+    icon: Car,
+    title: 'Gestão de Frota',
+    description: 'Controle cada TukTuk — manutenção, estado, quilómetros. Saiba sempre qual veículo está disponível e pronto a rolar.',
   },
   {
-    id: 'belem',
-    name: 'Belém',
-    emoji: '\u{26F5}',
-    tagline: 'Onde o mundo começou',
-    description: 'A epopeia dos Descobrimentos espera por si — Torre de Belém, Mosteiro dos Jerónimos, Padrão dos Descobrimentos, LX Factory e os famosos Pastéis de Belém.',
-    highlights: ['Torre de Belém', 'Mosteiro dos Jerónimos', 'Padrão dos Descobrimentos', 'LX Factory', 'Pastéis de Belém'],
-    duration: '2h',
-    price: 70,
-    maxPeople: 3,
+    icon: Users,
+    title: 'Motoristas & Escalas',
+    description: 'Convide motoristas, defina escalas semanais e acompanhe o desempenho de cada membro da equipa em tempo real.',
+  },
+  {
+    icon: Wallet,
+    title: 'Finanças & Relatórios',
+    description: 'Receitas, comissões e despesas por período. Dashboards visuais para tomar decisões com dados, não com palpites.',
+  },
+  {
+    icon: MessageCircle,
+    title: 'Suporte Integrado',
+    description: 'Chat de suporte direto na plataforma. Os seus motoristas e a sua equipa nunca ficam sem resposta.',
+  },
+  {
+    icon: Shield,
+    title: 'Seguro & Fiável',
+    description: 'Dados encriptados, backups automáticos e controlo de acesso por função. A sua informação está sempre protegida.',
   },
 ]
 
-const reviews = [
-  { name: 'Sarah M.', country: 'UK', stars: 5, text: 'Amazing experience! Joaquim showed us hidden gems we never would have found on our own. The yellow TukTuk is iconic!' },
-  { name: 'Marco P.', country: 'Italy', stars: 5, text: 'Best tour in Lisbon! Fun, authentic, and Joaquim knows every corner of the city. Highly recommended!' },
-  { name: 'Anna K.', country: 'Germany', stars: 5, text: 'The Belém tour was perfect. Beautiful views, great stories, and the TukTuk ride itself is an adventure!' },
+const benefits = [
+  'Configuração em menos de 10 minutos',
+  'Sem contratos — cancele quando quiser',
+  'Suporte em Português',
+  'Atualizações constantes e gratuitas',
+  'Funciona em telemóvel, tablet e computador',
+  'Dados sempre seus — exporte a qualquer momento',
 ]
 
-function TourCard({ tour }: { tour: typeof tours[0] }) {
+const steps = [
+  {
+    number: '01',
+    title: 'Crie a sua conta',
+    description: 'Registe-se com um código de convite e configure a sua empresa em minutos.',
+  },
+  {
+    number: '02',
+    title: 'Adicione a sua frota',
+    description: 'Registe os seus TukTuks, convide motoristas e defina os seus tours.',
+  },
+  {
+    number: '03',
+    title: 'Comece a gerir',
+    description: 'Reservas, escalas, finanças — tudo num só lugar. Concentre-se no que importa: os seus clientes.',
+  },
+]
+
+function FeatureCard({ feature }: { feature: typeof features[0] }) {
+  const Icon = feature.icon
   return (
-    <div className="bg-white rounded-card shadow-card-md hover:shadow-card-lg transition-all duration-300 overflow-hidden group">
-      <div className="bg-gradient-to-br from-yellow to-amber-400 p-8 text-center">
-        <span className="text-5xl">{tour.emoji}</span>
+    <div className="bg-white rounded-card shadow-card hover:shadow-card-md transition-all duration-300 p-6 group">
+      <div className="w-12 h-12 bg-yellow/20 rounded-btn flex items-center justify-center mb-4 group-hover:bg-yellow/30 transition-colors">
+        <Icon size={24} className="text-copper" />
       </div>
-      <div className="p-6">
-        <h3 className="font-outfit font-bold text-xl text-ink">{tour.name}</h3>
-        <p className="text-sm text-copper font-outfit font-semibold mt-1">{tour.tagline}</p>
-        <p className="text-ink2 text-sm mt-3 leading-relaxed">{tour.description}</p>
-
-        <div className="flex flex-wrap gap-2 mt-4">
-          {tour.highlights.map((h) => (
-            <span key={h} className="text-2xs bg-cream text-ink2 px-2 py-1 rounded-full font-outfit">{h}</span>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-4 mt-5 text-sm text-muted font-outfit">
-          <span className="flex items-center gap-1"><Clock size={14} /> {tour.duration}</span>
-          <span className="flex items-center gap-1"><Users size={14} /> Até {tour.maxPeople} pessoas</span>
-        </div>
-
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-line">
-          <div>
-            <span className="text-2xl font-outfit font-bold text-ink">{tour.price}€</span>
-            <span className="text-sm text-muted ml-1">/ tour</span>
-          </div>
-          <a
-            href={`${WHATSAPP_LINK}&text=${encodeURIComponent(`Olá! Gostaria de reservar o ${tour.name} em Lisboa.`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-green text-white px-5 py-2.5 rounded-btn font-outfit font-semibold text-sm hover:bg-green/90 transition-colors flex items-center gap-2"
-          >
-            Reservar <ChevronRight size={16} />
-          </a>
-        </div>
-      </div>
+      <h3 className="font-outfit font-bold text-lg text-ink">{feature.title}</h3>
+      <p className="text-ink2 text-sm mt-2 leading-relaxed font-outfit">{feature.description}</p>
     </div>
   )
 }
 
-function ReviewCard({ review }: { review: typeof reviews[0] }) {
+function StepCard({ step, isLast }: { step: typeof steps[0]; isLast: boolean }) {
   return (
-    <div className="bg-white rounded-card shadow-card p-6">
-      <div className="flex gap-1 mb-3">
-        {Array.from({ length: review.stars }).map((_, i) => (
-          <Star key={i} size={16} className="fill-yellow text-yellow" />
-        ))}
+    <div className="flex gap-6 items-start">
+      <div className="flex flex-col items-center">
+        <div className="w-14 h-14 bg-yellow rounded-full flex items-center justify-center font-outfit font-black text-ink text-lg shrink-0">
+          {step.number}
+        </div>
+        {!isLast && <div className="w-0.5 h-full bg-line mt-2 min-h-[40px]" />}
       </div>
-      <p className="text-ink2 text-sm leading-relaxed italic font-lora">"{review.text}"</p>
-      <div className="mt-4 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-cream flex items-center justify-center font-outfit font-bold text-ink text-sm">
-          {review.name.charAt(0)}
-        </div>
-        <div>
-          <p className="font-outfit font-semibold text-sm text-ink">{review.name}</p>
-          <p className="text-2xs text-muted font-outfit">{review.country}</p>
-        </div>
+      <div className="pb-10">
+        <h3 className="font-outfit font-bold text-xl text-ink">{step.title}</h3>
+        <p className="text-ink2 text-sm mt-1 leading-relaxed font-outfit">{step.description}</p>
       </div>
     </div>
   )
@@ -117,28 +99,28 @@ export function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-cream/95 backdrop-blur-sm border-b border-line">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-yellow rounded-full flex items-center justify-center">
-              <span className="font-outfit font-black text-ink text-sm">T</span>
-            </div>
-            <span className="font-outfit font-bold text-lg text-ink">Tuk & Roll</span>
+            <span className="text-2xl">🛺</span>
+            <span className="font-outfit font-extrabold text-xl text-ink">
+              Tuk <span className="font-lora italic text-copper">an</span> App
+            </span>
           </div>
           <div className="hidden sm:flex items-center gap-6 text-sm font-outfit text-ink2">
-            <a href="#tours" className="hover:text-ink transition-colors">Tours</a>
-            <a href="#about" className="hover:text-ink transition-colors">Sobre</a>
-            <a href="#reviews" className="hover:text-ink transition-colors">Avaliações</a>
-            <a href="#contact" className="hover:text-ink transition-colors">Contacto</a>
+            <a href="#features" className="hover:text-ink transition-colors">Funcionalidades</a>
+            <a href="#how" className="hover:text-ink transition-colors">Como Funciona</a>
+            <a href="#pricing" className="hover:text-ink transition-colors">Planos</a>
           </div>
           <div className="flex items-center gap-3">
-            <a
-              href={WHATSAPP_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green text-white px-4 py-2 rounded-btn font-outfit font-semibold text-sm hover:bg-green/90 transition-colors flex items-center gap-2"
+            <Link
+              to="/login"
+              className="text-sm font-outfit font-semibold text-ink2 hover:text-ink transition-colors"
             >
-              <MessageCircle size={16} /> Reservar
-            </a>
-            <Link to="/login" className="text-sm font-outfit text-muted hover:text-ink transition-colors">
-              Login
+              Entrar
+            </Link>
+            <Link
+              to="/signup"
+              className="bg-yellow text-ink px-5 py-2.5 rounded-btn font-outfit font-semibold text-sm hover:bg-yellow/90 transition-colors"
+            >
+              Começar Grátis
             </Link>
           </div>
         </div>
@@ -148,113 +130,141 @@ export function LandingPage() {
       <section className="pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-yellow/20 text-ink2 px-4 py-2 rounded-full text-sm font-outfit mb-6">
-            <MapPin size={14} className="text-copper" />
-            <span>Lisboa, Portugal</span>
+            <Zap size={14} className="text-copper" />
+            <span>A plataforma feita para operadores de TukTuk</span>
           </div>
           <h1 className="font-outfit font-black text-4xl sm:text-6xl lg:text-7xl text-ink leading-tight">
-            Descubra Lisboa<br />
-            <span className="text-copper">num TukTuk</span>
+            Gerencie o seu negócio<br />
+            <span className="text-copper">de TukTuk</span>
           </h1>
           <p className="font-outfit text-lg sm:text-xl text-ink2 mt-6 max-w-2xl mx-auto leading-relaxed">
-            Tours privados e autênticos pelas ruas e miradouros mais bonitos de Lisboa.
-            Uma experiência única no nosso TukTuk amarelo.
+            Reservas, frota, motoristas e finanças — tudo numa única plataforma.
+            Menos tempo no escritório, mais tempo na estrada.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
-            <a
-              href="#tours"
-              className="bg-yellow text-ink px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-yellow/90 transition-colors shadow-card-md"
+            <Link
+              to="/signup"
+              className="bg-yellow text-ink px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-yellow/90 transition-colors shadow-card-md flex items-center justify-center gap-2"
             >
-              Ver Tours
-            </a>
+              Começar Grátis <ArrowRight size={20} />
+            </Link>
             <a
-              href={WHATSAPP_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green text-white px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-green/90 transition-colors flex items-center justify-center gap-2"
+              href="#features"
+              className="bg-white text-ink border border-line px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-cream transition-colors"
             >
-              <MessageCircle size={20} /> Reservar via WhatsApp
+              Ver Funcionalidades
             </a>
           </div>
-          <div className="flex items-center justify-center gap-8 mt-12 text-sm font-outfit text-muted">
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={14} className="fill-yellow text-yellow" />
-                ))}
-              </div>
-              <span>5.0 no Google</span>
-            </div>
-            <span className="text-line">|</span>
-            <span>Tours privados</span>
-            <span className="text-line">|</span>
-            <span>Desde 60€</span>
+          <div className="flex items-center justify-center gap-6 sm:gap-8 mt-12 text-sm font-outfit text-muted flex-wrap">
+            <span className="flex items-center gap-1.5"><CheckCircle size={16} className="text-green" /> Sem cartão de crédito</span>
+            <span className="flex items-center gap-1.5"><CheckCircle size={16} className="text-green" /> Setup em 10 min</span>
+            <span className="flex items-center gap-1.5"><CheckCircle size={16} className="text-green" /> Suporte em PT</span>
           </div>
         </div>
       </section>
 
-      {/* Tours Section */}
-      <section id="tours" className="py-16 sm:py-24 px-4 sm:px-6 bg-cream">
+      {/* Dashboard Preview */}
+      <section className="pb-16 sm:pb-24 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-white rounded-card shadow-card-lg p-4 sm:p-8 border border-line">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="bg-cream rounded-btn p-4 text-center">
+                <div className="text-2xl sm:text-3xl font-outfit font-black text-ink">12</div>
+                <div className="text-2xs sm:text-sm text-muted font-outfit mt-1">Reservas Hoje</div>
+              </div>
+              <div className="bg-cream rounded-btn p-4 text-center">
+                <div className="text-2xl sm:text-3xl font-outfit font-black text-copper">4</div>
+                <div className="text-2xs sm:text-sm text-muted font-outfit mt-1">TukTuks Ativos</div>
+              </div>
+              <div className="bg-cream rounded-btn p-4 text-center">
+                <div className="text-2xl sm:text-3xl font-outfit font-black text-green">840€</div>
+                <div className="text-2xs sm:text-sm text-muted font-outfit mt-1">Receita do Dia</div>
+              </div>
+              <div className="bg-cream rounded-btn p-4 text-center">
+                <div className="text-2xl sm:text-3xl font-outfit font-black text-ink">6</div>
+                <div className="text-2xs sm:text-sm text-muted font-outfit mt-1">Motoristas</div>
+              </div>
+            </div>
+            <div className="mt-6 bg-cream rounded-btn p-6 text-center">
+              <BarChart3 size={48} className="mx-auto text-muted/40" />
+              <p className="text-sm text-muted font-outfit mt-3">Dashboard com métricas em tempo real</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-outfit font-bold text-3xl sm:text-4xl text-ink">Os Nossos Tours</h2>
+            <h2 className="font-outfit font-bold text-3xl sm:text-4xl text-ink">Tudo o que precisa, num só lugar</h2>
             <p className="font-outfit text-ink2 mt-3 max-w-xl mx-auto">
-              Três percursos únicos para descobrir cada faceta de Lisboa. Escolha o seu favorito ou combine vários!
+              Ferramentas pensadas para quem gere TukTuks no dia-a-dia. Simples, rápidas e em Português.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {tours.map((tour) => (
-              <TourCard key={tour.id} tour={tour} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((f) => (
+              <FeatureCard key={f.title} feature={f} />
             ))}
-          </div>
-          <div className="text-center mt-10">
-            <div className="inline-flex items-center gap-2 bg-white rounded-card shadow-card px-6 py-3 text-sm font-outfit text-ink2">
-              <span className="text-lg">💡</span>
-              <span><strong>Pack desconto:</strong> Reserve 2 tours e ganhe 10% de desconto. 3 tours = 15% desconto!</span>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* About Section */}
-      <section id="about" className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
+      {/* How It Works */}
+      <section id="how" className="py-16 sm:py-24 px-4 sm:px-6 bg-cream">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="font-outfit font-bold text-3xl sm:text-4xl text-ink">Como Funciona</h2>
+            <p className="font-outfit text-ink2 mt-3">Três passos para digitalizar o seu negócio</p>
+          </div>
+          <div className="flex flex-col">
+            {steps.map((step, i) => (
+              <StepCard key={step.number} step={step} isLast={i === steps.length - 1} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits */}
+      <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="font-outfit font-bold text-3xl text-ink">Sobre a Tuk & Roll</h2>
-              <div className="mt-6 space-y-4 text-ink2 font-outfit leading-relaxed">
-                <p>
-                  Olá! Eu sou o Joaquim, o ruivo do TukTuk amarelo de Lisboa.
-                  Nasci e cresci nesta cidade e conheço cada rua, cada miradouro, cada história escondida.
-                </p>
-                <p>
-                  A Tuk & Roll nasceu de uma paixão simples: mostrar a Lisboa autêntica a quem nos visita.
-                  Não os sítios que toda a gente conhece, mas os recantos especiais que fazem desta cidade única.
-                </p>
-                <p>
-                  Cada tour é privado e personalizado. Paramos onde quiser, tiramos fotos nos melhores spots,
-                  e pelo caminho conto-vos as histórias que nenhum guia turístico conta.
-                </p>
+              <h2 className="font-outfit font-bold text-3xl text-ink">
+                Feito para operadores.<br />
+                <span className="text-copper">Por operadores.</span>
+              </h2>
+              <p className="text-ink2 font-outfit mt-4 leading-relaxed">
+                Sabemos os desafios do dia-a-dia porque vivemos o mesmo negócio.
+                O Tuk an App nasceu nas ruas de Lisboa e foi pensado para resolver problemas reais.
+              </p>
+              <div className="mt-8 space-y-3">
+                {benefits.map((b) => (
+                  <div key={b} className="flex items-center gap-3">
+                    <CheckCircle size={18} className="text-green shrink-0" />
+                    <span className="font-outfit text-sm text-ink2">{b}</span>
+                  </div>
+                ))}
               </div>
             </div>
             <div className="bg-gradient-to-br from-yellow/30 to-copper/10 rounded-card p-8 text-center">
-              <div className="text-7xl mb-4">🛺</div>
-              <h3 className="font-outfit font-bold text-xl text-ink">O TukTuk Amarelo</h3>
-              <p className="text-ink2 text-sm mt-2 font-outfit">
-                O nosso TukTuk amarelo é impossível de não reparar!
-                Confortável para até 3 passageiros, perfeito para casais, famílias e amigos.
+              <Smartphone size={64} className="mx-auto text-copper/60" />
+              <h3 className="font-outfit font-bold text-xl text-ink mt-4">Mobile-first</h3>
+              <p className="text-ink2 text-sm mt-2 font-outfit leading-relaxed">
+                Os seus motoristas usam a app no telemóvel — veem os tours do dia, registam vendas de rua e consultam a escala. Tudo sem ligar para o escritório.
               </p>
               <div className="mt-6 grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-outfit font-bold text-ink">3</div>
-                  <div className="text-2xs text-muted font-outfit">Lugares</div>
+                  <div className="text-2xl font-outfit font-bold text-ink">24/7</div>
+                  <div className="text-2xs text-muted font-outfit">Disponível</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-outfit font-bold text-ink">3</div>
-                  <div className="text-2xs text-muted font-outfit">Tours</div>
+                  <div className="text-2xl font-outfit font-bold text-ink">PT</div>
+                  <div className="text-2xs text-muted font-outfit">Português</div>
                 </div>
                 <div>
                   <div className="text-2xl font-outfit font-bold text-ink">100%</div>
-                  <div className="text-2xs text-muted font-outfit">Privado</div>
+                  <div className="text-2xs text-muted font-outfit">Cloud</div>
                 </div>
               </div>
             </div>
@@ -262,17 +272,64 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Reviews Section */}
-      <section id="reviews" className="py-16 sm:py-24 px-4 sm:px-6 bg-cream">
-        <div className="max-w-6xl mx-auto">
+      {/* Pricing Section */}
+      <section id="pricing" className="py-16 sm:py-24 px-4 sm:px-6 bg-cream">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-outfit font-bold text-3xl sm:text-4xl text-ink">O que dizem os nossos clientes</h2>
-            <p className="font-outfit text-ink2 mt-3">100% de avaliações 5 estrelas</p>
+            <h2 className="font-outfit font-bold text-3xl sm:text-4xl text-ink">Planos Simples</h2>
+            <p className="font-outfit text-ink2 mt-3">Comece grátis. Escale quando o seu negócio crescer.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {reviews.map((review, i) => (
-              <ReviewCard key={i} review={review} />
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            {/* Free Plan */}
+            <div className="bg-white rounded-card shadow-card p-8">
+              <div className="text-sm font-outfit font-semibold text-copper uppercase tracking-wider">Starter</div>
+              <div className="mt-4">
+                <span className="text-4xl font-outfit font-black text-ink">0€</span>
+                <span className="text-muted font-outfit ml-1">/ mês</span>
+              </div>
+              <p className="text-ink2 text-sm font-outfit mt-3">Perfeito para começar e experimentar a plataforma.</p>
+              <div className="mt-6 space-y-3">
+                {['Até 2 TukTuks', 'Até 3 motoristas', 'Reservas ilimitadas', 'Dashboard de finanças', 'Suporte por chat'].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm font-outfit text-ink2">
+                    <CheckCircle size={16} className="text-green shrink-0" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <Link
+                to="/signup"
+                className="mt-8 block text-center bg-cream text-ink border border-line px-6 py-3 rounded-btn font-outfit font-semibold text-sm hover:bg-line/30 transition-colors"
+              >
+                Criar Conta Grátis
+              </Link>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="bg-ink rounded-card shadow-card-lg p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-yellow text-ink px-4 py-1 rounded-bl-btn font-outfit font-bold text-2xs uppercase">
+                Popular
+              </div>
+              <div className="text-sm font-outfit font-semibold text-yellow uppercase tracking-wider">Pro</div>
+              <div className="mt-4">
+                <span className="text-4xl font-outfit font-black text-cream">29€</span>
+                <span className="text-cream/60 font-outfit ml-1">/ mês</span>
+              </div>
+              <p className="text-cream/70 text-sm font-outfit mt-3">Para operações a sério. Tudo ilimitado.</p>
+              <div className="mt-6 space-y-3">
+                {['TukTuks ilimitados', 'Motoristas ilimitados', 'Relatórios avançados', 'Escalas automáticas', 'Suporte prioritário', 'Exportação de dados'].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm font-outfit text-cream/80">
+                    <CheckCircle size={16} className="text-yellow shrink-0" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <Link
+                to="/signup"
+                className="mt-8 block text-center bg-yellow text-ink px-6 py-3 rounded-btn font-outfit font-bold text-sm hover:bg-yellow/90 transition-colors"
+              >
+                Começar Agora
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -281,78 +338,68 @@ export function LandingPage() {
       <section className="py-16 sm:py-24 px-4 sm:px-6 bg-ink">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-outfit font-bold text-3xl sm:text-4xl text-cream">
-            Pronto para descobrir Lisboa?
+            Pronto para modernizar o seu negócio?
           </h2>
           <p className="font-outfit text-cream/70 mt-4 text-lg">
-            Reserve o seu tour agora via WhatsApp. Resposta em menos de 1 hora!
+            Junte-se aos operadores de TukTuk que já usam o Tuk an App para gerir tudo num só lugar.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
-            <a
-              href={WHATSAPP_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green text-white px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-green/90 transition-colors flex items-center justify-center gap-2"
+            <Link
+              to="/signup"
+              className="bg-yellow text-ink px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-yellow/90 transition-colors flex items-center justify-center gap-2"
             >
-              <MessageCircle size={20} /> Reservar via WhatsApp
-            </a>
+              Começar Grátis <ArrowRight size={20} />
+            </Link>
             <a
-              href="tel:+351910000000"
-              className="bg-cream/10 text-cream border border-cream/20 px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-cream/20 transition-colors flex items-center justify-center gap-2"
+              href="mailto:ops@tukanapp.pt"
+              className="bg-cream/10 text-cream border border-cream/20 px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-cream/20 transition-colors"
             >
-              <Phone size={20} /> Ligar Agora
+              Falar Connosco
             </a>
           </div>
         </div>
       </section>
 
-      {/* Contact / Footer */}
-      <footer id="contact" className="py-12 px-4 sm:px-6 bg-ink border-t border-white/10">
+      {/* Footer */}
+      <footer className="py-12 px-4 sm:px-6 bg-ink border-t border-white/10">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-9 h-9 bg-yellow rounded-full flex items-center justify-center">
-                  <span className="font-outfit font-black text-ink text-sm">T</span>
-                </div>
-                <span className="font-outfit font-bold text-lg text-cream">Tuk & Roll</span>
+                <span className="text-2xl">🛺</span>
+                <span className="font-outfit font-extrabold text-xl text-cream">
+                  Tuk <span className="font-lora italic text-yellow">an</span> App
+                </span>
               </div>
-              <p className="text-cream/60 text-sm font-outfit">
-                Tours de TukTuk em Lisboa.<br />
-                Experiências privadas e autênticas.
+              <p className="text-cream/60 text-sm font-outfit leading-relaxed">
+                A plataforma de gestão para<br />
+                operadores de TukTuk.
               </p>
             </div>
             <div>
-              <h3 className="font-outfit font-semibold text-cream mb-3">Contactos</h3>
+              <h3 className="font-outfit font-semibold text-cream mb-3">Plataforma</h3>
               <div className="space-y-2 text-sm font-outfit text-cream/60">
-                <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-cream transition-colors">
-                  <MessageCircle size={14} /> WhatsApp
-                </a>
-                <a href="mailto:ops@tukanapp.pt" className="flex items-center gap-2 hover:text-cream transition-colors">
-                  <Mail size={14} /> ops@tukanapp.pt
-                </a>
-                <a href="tel:+351910000000" className="flex items-center gap-2 hover:text-cream transition-colors">
-                  <Phone size={14} /> +351 910 000 000
-                </a>
+                <a href="#features" className="block hover:text-cream transition-colors">Funcionalidades</a>
+                <a href="#pricing" className="block hover:text-cream transition-colors">Planos</a>
+                <a href="#how" className="block hover:text-cream transition-colors">Como Funciona</a>
               </div>
             </div>
             <div>
-              <h3 className="font-outfit font-semibold text-cream mb-3">Siga-nos</h3>
+              <h3 className="font-outfit font-semibold text-cream mb-3">Contacto</h3>
               <div className="space-y-2 text-sm font-outfit text-cream/60">
-                <a href="https://instagram.com/tukandroll" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-cream transition-colors">
-                  <Instagram size={14} /> @tukandroll
+                <a href="mailto:ops@tukanapp.pt" className="block hover:text-cream transition-colors">
+                  ops@tukanapp.pt
                 </a>
               </div>
               <div className="mt-6">
-                <h3 className="font-outfit font-semibold text-cream mb-3">Para operadores</h3>
-                <Link to="/login" className="text-sm font-outfit text-cream/60 hover:text-cream transition-colors">
-                  Aceder ao painel de gestão →
+                <Link to="/login" className="text-sm font-outfit text-cream/60 hover:text-cream transition-colors flex items-center gap-1">
+                  Aceder ao painel <ChevronRight size={14} />
                 </Link>
               </div>
             </div>
           </div>
           <div className="border-t border-white/10 mt-8 pt-8 text-center text-cream/40 text-sm font-outfit">
-            <p>© {new Date().getFullYear()} Tuk & Roll — Tours de TukTuk em Lisboa. Todos os direitos reservados.</p>
-            <p className="mt-1">Powered by <a href="https://www.tukanapp.pt" className="text-yellow/60 hover:text-yellow transition-colors">Tuk an App</a></p>
+            <p>&copy; {new Date().getFullYear()} Tuk an App — Plataforma de gestão para operadores de TukTuk. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
