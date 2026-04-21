@@ -8,11 +8,11 @@
 
 ## P0 — Lançamento SaaS (esta semana)
 
-- [ ] **Signup aberto** — Remover obrigatoriedade do invite code, permitir registo directo
+- [x] **Signup aberto** — Remover obrigatoriedade do invite code, permitir registo directo
 - [ ] **Onboarding wizard** — Guiar novo owner: empresa → primeiro TukTuk → primeiro tour → dashboard
-- [ ] **Landing page polish** — Screenshots reais, FAQ section, copy melhorado do pricing
-- [ ] **Termos de Serviço** — Página /termos com condições básicas do SaaS
-- [ ] **Política de Privacidade** — Página /privacidade com RGPD
+- [x] **Landing page polish** — Screenshots reais, FAQ section, copy melhorado do pricing
+- [x] **Termos de Serviço** — Página /termos com condições básicas do SaaS
+- [x] **Política de Privacidade** — Página /privacidade com RGPD
 - [ ] **Pesquisa de mercado** — Listar empresas de TukTuk em PT (Lisboa, Porto, Sintra, Algarve)
 
 ## P1 — Billing & Monetização (próximas 2 semanas)
