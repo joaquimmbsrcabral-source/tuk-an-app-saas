@@ -8,6 +8,8 @@ inject()
 
 // Public Pages
 import { LandingPage } from './pages/LandingPage'
+import { TermsPage } from './pages/TermsPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 
 // Auth Pages
 import { LoginPage } from './pages/LoginPage'
@@ -79,8 +81,10 @@ export default function App() {
     <Router>
       <AuthProvider>
         <Routes>
-          {/* Public Landing Page */}
+          {/* Public Pages */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/termos" element={<TermsPage />} />
+          <Route path="/privacidade" element={<PrivacyPage />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
