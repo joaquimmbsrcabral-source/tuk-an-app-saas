@@ -19,7 +19,18 @@ export const DashboardPage: React.FC = () => {
   })
   const [chartData, setChartData] = useState<{ date: string; amount: number }[]>([])
   const [loading, setLoading] = useState(true)
+  const [showSkeleton, setShowSkeleton] = useState(false)
   const [liveDrivers, setLiveDrivers] = useState<Profile[]>([])
+
+  // Only show skeleton if loading takes more than 300ms — avoids flash when data is cached
+  useEffect(() => {
+    if (!loading) {
+      setShowSkeleton(false)
+      return
+    }
+    const timer = setTimeout(() => setShowSkeleton(true), 300)
+    return () => clearTimeout(timer)
+  }, [loading])
 
   useEffect(() => {
     if (!profile) return
@@ -120,7 +131,7 @@ export const DashboardPage: React.FC = () => {
           const bookingPayments = payments?.filter((p) => p.booking_id === b.id) || []
           const bookingTotal = bookingPayments.reduce((sum, p) => sum + p.amount, 0)
           if (!tuktukRevenue[b.tuktuk_id]) {
-            tuktukRevenue[b.tuktuk_id] = { nickname: b.tuktuk_id, amount: 0 }
+            tuktukRevenue[b.tuktuk_id] = { nickname: b.id, amount: 0 }
           }
           tuktukRevenue[b.tuktuk_id].amount += bookingTotal
         })
@@ -164,7 +175,7 @@ export const DashboardPage: React.FC = () => {
     return d.toLocaleDateString('pt-PT', { weekday: 'short' }).slice(0, 3)
   }
 
-  if (loading) {
+  if (loading && showSkeleton) {
     return (
       <OwnerLayout>
         <div className="space-y-6">
@@ -177,6 +188,10 @@ export const DashboardPage: React.FC = () => {
         </div>
       </OwnerLayout>
     )
+  }
+
+  if (loading) {
+    return <OwnerLayout><div /></OwnerLayout>
   }
 
   return (
