@@ -6,9 +6,11 @@ import { StatCard } from '../../components/StatCard'
 import { formatCurrency, isTodayDate } from '../../lib/format'
 import { Payment, Booking, Profile, StreetSale } from '../../lib/types'
 import { StatusBadge } from '../../components/StatusBadge'
+import { OnboardingWizard } from '../../components/OnboardingWizard'
 
 export const DashboardPage: React.FC = () => {
   const { profile } = useAuth()
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null)
   const [stats, setStats] = useState({
     todayRevenue: 0,
     weekRevenue: 0,
@@ -21,6 +23,19 @@ export const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [showSkeleton, setShowSkeleton] = useState(false)
   const [liveDrivers, setLiveDrivers] = useState<Profile[]>([])
+
+  // Check if this owner needs onboarding (no tuktuks yet)
+  useEffect(() => {
+    if (!profile) return
+    const check = async () => {
+      const { count } = await supabase
+        .from('tuktuks')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', profile.company_id)
+      setNeedsOnboarding(count === 0)
+    }
+    check()
+  }, [profile])
 
   // Only show skeleton if loading takes more than 300ms — avoids flash when data is cached
   useEffect(() => {
@@ -192,6 +207,19 @@ export const DashboardPage: React.FC = () => {
 
   if (loading) {
     return <OwnerLayout><div /></OwnerLayout>
+  }
+
+  if (needsOnboarding) {
+    return (
+      <OwnerLayout>
+        <OnboardingWizard onComplete={() => {
+          setNeedsOnboarding(false)
+          setLoading(true)
+          // Re-fetch stats after onboarding
+          window.location.reload()
+        }} />
+      </OwnerLayout>
+    )
   }
 
   return (
