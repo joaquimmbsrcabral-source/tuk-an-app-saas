@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart3, CalendarDays, Users, Car, Wallet, MessageCircle, Shield, Smartphone, ChevronRight, CheckCircle, ArrowRight, Star, Zap } from 'lucide-react'
+import { BarChart3, CalendarDays, Users, Car, Wallet, MessageCircle, Shield, Smartphone, ChevronRight, CheckCircle, ArrowRight, Star, Zap, ChevronDown, HelpCircle } from 'lucide-react'
 
 const features = [
   {
@@ -62,6 +62,63 @@ const steps = [
   },
 ]
 
+const faqs = [
+  {
+    question: 'Preciso de conhecimentos técnicos para usar?',
+    answer: 'Não. O Tuk an App foi desenhado para ser simples e intuitivo. Se sabe usar um telemóvel, sabe usar a plataforma. E se tiver dúvidas, o nosso suporte em Português está sempre disponível.',
+  },
+  {
+    question: 'Posso experimentar antes de pagar?',
+    answer: 'Sim! O plano Starter é totalmente gratuito e permite gerir até 2 TukTuks e 3 motoristas sem limite de tempo. Quando precisar de mais, faz upgrade para o Pro.',
+  },
+  {
+    question: 'Os meus dados estão seguros?',
+    answer: 'Absolutamente. Usamos encriptação de ponta a ponta, backups automáticos diários, e a infraestrutura está alojada na Europa (RGPD compliant). Os seus dados são sempre seus — pode exportá-los a qualquer momento.',
+  },
+  {
+    question: 'Funciona em telemóvel?',
+    answer: 'Sim. A plataforma é 100% responsiva. Os owners gerem tudo via browser (telemóvel, tablet ou computador) e os motoristas têm uma interface mobile-first optimizada para o dia-a-dia na estrada.',
+  },
+  {
+    question: 'Posso cancelar a qualquer momento?',
+    answer: 'Sim, sem contratos nem fidelização. Pode fazer downgrade para o plano Starter ou cancelar quando quiser. Sem perguntas, sem complicações.',
+  },
+  {
+    question: 'Quanto tempo demora a configurar?',
+    answer: 'Menos de 10 minutos. Cria a conta, adiciona os seus TukTuks e tours, convida os motoristas — e está pronto a gerir.',
+  },
+]
+
+const stats = [
+  { value: '10 min', label: 'Setup completo' },
+  { value: '100%', label: 'Cloud — sem instalação' },
+  { value: '24/7', label: 'Sempre disponível' },
+  { value: 'RGPD', label: 'Dados na Europa' },
+]
+
+function FAQItem({ faq }: { faq: typeof faqs[0] }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border-b border-line last:border-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-5 text-left group"
+      >
+        <span className="font-outfit font-semibold text-ink pr-4">{faq.question}</span>
+        <ChevronDown
+          size={20}
+          className={`text-muted shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {open && (
+        <p className="font-outfit text-sm text-ink2 pb-5 leading-relaxed pr-8">
+          {faq.answer}
+        </p>
+      )}
+    </div>
+  )
+}
+
 function FeatureCard({ feature }: { feature: typeof features[0] }) {
   const Icon = feature.icon
   return (
@@ -108,6 +165,7 @@ export function LandingPage() {
             <a href="#features" className="hover:text-ink transition-colors">Funcionalidades</a>
             <a href="#how" className="hover:text-ink transition-colors">Como Funciona</a>
             <a href="#pricing" className="hover:text-ink transition-colors">Planos</a>
+            <a href="#faq" className="hover:text-ink transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -189,6 +247,20 @@ export function LandingPage() {
               <BarChart3 size={48} className="mx-auto text-muted/40" />
               <p className="text-sm text-muted font-outfit mt-3">Dashboard com métricas em tempo real</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Bar */}
+      <section className="py-10 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            {stats.map((s) => (
+              <div key={s.label} className="text-center">
+                <div className="text-2xl sm:text-3xl font-outfit font-black text-copper">{s.value}</div>
+                <div className="text-sm text-muted font-outfit mt-1">{s.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -276,8 +348,10 @@ export function LandingPage() {
       <section id="pricing" className="py-16 sm:py-24 px-4 sm:px-6 bg-cream">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-outfit font-bold text-3xl sm:text-4xl text-ink">Planos Simples</h2>
-            <p className="font-outfit text-ink2 mt-3">Comece grátis. Escale quando o seu negócio crescer.</p>
+            <h2 className="font-outfit font-bold text-3xl sm:text-4xl text-ink">Planos Simples, Sem Surpresas</h2>
+            <p className="font-outfit text-ink2 mt-3 max-w-xl mx-auto">
+              Sem contratos, sem taxas escondidas. Comece grátis e faça upgrade apenas quando o seu negócio precisar de mais.
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {/* Free Plan */}
@@ -334,6 +408,32 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-yellow/20 text-ink2 px-4 py-2 rounded-full text-sm font-outfit mb-4">
+              <HelpCircle size={14} className="text-copper" />
+              <span>Perguntas Frequentes</span>
+            </div>
+            <h2 className="font-outfit font-bold text-3xl sm:text-4xl text-ink">Tem dúvidas? Nós respondemos.</h2>
+          </div>
+          <div className="bg-cream rounded-card p-6 sm:p-8">
+            {faqs.map((faq) => (
+              <FAQItem key={faq.question} faq={faq} />
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <p className="font-outfit text-sm text-muted">
+              Não encontrou a resposta?{' '}
+              <a href="mailto:ops@tukanapp.pt" className="text-copper hover:underline font-semibold">
+                Envie-nos um email
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 bg-ink">
         <div className="max-w-3xl mx-auto text-center">
@@ -382,16 +482,19 @@ export function LandingPage() {
                 <a href="#features" className="block hover:text-cream transition-colors">Funcionalidades</a>
                 <a href="#pricing" className="block hover:text-cream transition-colors">Planos</a>
                 <a href="#how" className="block hover:text-cream transition-colors">Como Funciona</a>
+                <a href="#faq" className="block hover:text-cream transition-colors">FAQ</a>
               </div>
             </div>
             <div>
-              <h3 className="font-outfit font-semibold text-cream mb-3">Contacto</h3>
+              <h3 className="font-outfit font-semibold text-cream mb-3">Contacto & Legal</h3>
               <div className="space-y-2 text-sm font-outfit text-cream/60">
                 <a href="mailto:ops@tukanapp.pt" className="block hover:text-cream transition-colors">
                   ops@tukanapp.pt
                 </a>
+                <Link to="/termos" className="block hover:text-cream transition-colors">Termos de Serviço</Link>
+                <Link to="/privacidade" className="block hover:text-cream transition-colors">Política de Privacidade</Link>
               </div>
-              <div className="mt-6">
+              <div className="mt-4">
                 <Link to="/login" className="text-sm font-outfit text-cream/60 hover:text-cream transition-colors flex items-center gap-1">
                   Aceder ao painel <ChevronRight size={14} />
                 </Link>
