@@ -25,15 +25,17 @@ export const SignupPage: React.FC = () => {
 
   const [code, setCode] = useState((searchParams.get('code') || '').toUpperCase())
   const [codeStatus, setCodeStatus] = useState<CodeStatus>({ state: 'idle' })
+  const [showCodeField, setShowCodeField] = useState(!!searchParams.get('code'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [phone, setPhone] = useState('')
+  const [acceptTerms, setAcceptTerms] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Debounced code validation
+  // Debounced code validation (only when code is entered)
   useEffect(() => {
     const trimmed = code.trim().toUpperCase()
     if (!trimmed || trimmed.length < 3) {
@@ -65,12 +67,15 @@ export const SignupPage: React.FC = () => {
     e.preventDefault()
     setError('')
 
-    const trimmedCode = code.trim().toUpperCase()
-    if (!trimmedCode) {
-      setError('É necessário um código de convite para criar uma conta.')
+    if (!acceptTerms) {
+      setError('É necessário aceitar os Termos de Serviço e a Política de Privacidade.')
       return
     }
-    if (codeStatus.state !== 'valid') {
+
+    const trimmedCode = code.trim().toUpperCase()
+
+    // If a code was entered, it must be valid
+    if (trimmedCode && codeStatus.state !== 'valid') {
       setError('Código de convite inválido. Verifica com quem te enviou o código.')
       return
     }
@@ -84,18 +89,18 @@ export const SignupPage: React.FC = () => {
         throw new Error('Conta criada. Verifica o teu email para confirmar antes de entrar.')
       }
 
-      const { error: rpcError } = await supabase.rpc('signup_owner_with_code', {
-        p_code: trimmedCode,
+      const { error: rpcError } = await supabase.rpc('signup_owner_direct', {
+        p_code: trimmedCode || null,
         p_company_name: companyName,
         p_full_name: fullName,
         p_phone: phone,
       })
       if (rpcError) {
-        const code = (rpcError.message || '').toLowerCase()
-        if (code.includes('invalid_code')) throw new Error('Código de convite inválido.')
-        if (code.includes('code_already_used')) throw new Error('Este código já foi utilizado.')
-        if (code.includes('code_expired')) throw new Error('Este código expirou.')
-        if (code.includes('profile_already_exists')) throw new Error('Já existe um perfil associado a esta conta.')
+        const msg = (rpcError.message || '').toLowerCase()
+        if (msg.includes('invalid_code')) throw new Error('Código de convite inválido.')
+        if (msg.includes('code_already_used')) throw new Error('Este código já foi utilizado.')
+        if (msg.includes('code_expired')) throw new Error('Este código expirou.')
+        if (msg.includes('profile_already_exists')) throw new Error('Já existe um perfil associado a esta conta.')
         throw rpcError
       }
 
@@ -111,6 +116,8 @@ export const SignupPage: React.FC = () => {
     codeStatus.state === 'valid' ? 'border-green-500' :
     codeStatus.state === 'invalid' ? 'border-copper' : 'border-line'
 
+  const canSubmit = !loading && acceptTerms && (!code.trim() || codeStatus.state === 'valid')
+
   return (
     <div className="min-h-screen bg-cream flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -121,7 +128,7 @@ export const SignupPage: React.FC = () => {
         <div className="bg-card border border-line rounded-2xl p-8">
           <h1 className="text-2xl font-bold text-ink mb-2 text-center">Criar Conta</h1>
           <p className="text-sm text-ink2 text-center mb-6">
-            Apenas por convite — introduz o código que recebeste.
+            Começa a gerir os teus TukTuks em minutos.
           </p>
 
           {error && (
@@ -131,30 +138,6 @@ export const SignupPage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-600 text-ink mb-1">Código de Convite</label>
-              <input
-                type="text"
-                className={`w-full px-4 py-3 bg-card border ${codeBorder} rounded-btn text-ink font-mono tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-yellow`}
-                placeholder="EX: AB-2026"
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                autoComplete="off"
-                required
-              />
-              <div className="mt-1 text-xs min-h-[16px]">
-                {codeStatus.state === 'checking' && <span className="text-ink2">A validar código...</span>}
-                {codeStatus.state === 'valid' && (
-                  <span className="text-green-600">
-                    ✓ Código válido{codeStatus.note ? ` — ${codeStatus.note}` : ''}
-                  </span>
-                )}
-                {codeStatus.state === 'invalid' && (
-                  <span className="text-copper">✗ {REASON_MSG[codeStatus.reason] || 'Código inválido'}</span>
-                )}
-              </div>
-            </div>
-
             <Input
               type="text"
               label="Nome Completo"
@@ -166,7 +149,7 @@ export const SignupPage: React.FC = () => {
             <Input
               type="text"
               label="Nome da Empresa"
-              placeholder="Tuk & Roll"
+              placeholder="Lisboa TukTuk Tours"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               required
@@ -190,18 +173,75 @@ export const SignupPage: React.FC = () => {
             <Input
               type="password"
               label="Senha"
-              placeholder="••••••••"
+              placeholder="Mínimo 6 caracteres"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+
+            {/* Invite code - optional, collapsible */}
+            {showCodeField ? (
+              <div>
+                <label className="block text-sm font-600 text-ink mb-1">
+                  Código de Convite <span className="text-ink2 font-normal">(opcional)</span>
+                </label>
+                <input
+                  type="text"
+                  className={`w-full px-4 py-3 bg-card border ${codeBorder} rounded-btn text-ink font-mono tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-yellow`}
+                  placeholder="EX: AB-2026"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  autoComplete="off"
+                />
+                <div className="mt-1 text-xs min-h-[16px]">
+                  {codeStatus.state === 'checking' && <span className="text-ink2">A validar código...</span>}
+                  {codeStatus.state === 'valid' && (
+                    <span className="text-green-600">
+                      ✓ Código válido{codeStatus.note ? ` — ${codeStatus.note}` : ''}
+                    </span>
+                  )}
+                  {codeStatus.state === 'invalid' && (
+                    <span className="text-copper">✗ {REASON_MSG[codeStatus.reason] || 'Código inválido'}</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowCodeField(true)}
+                className="text-sm text-copper hover:text-copper/80 transition-colors"
+              >
+                Tens um código de convite?
+              </button>
+            )}
+
+            {/* Terms & Privacy checkbox */}
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-1 w-4 h-4 accent-yellow rounded"
+              />
+              <span className="text-xs text-ink2 leading-relaxed">
+                Li e aceito os{' '}
+                <Link to="/termos" target="_blank" className="text-copper underline hover:text-copper/80">
+                  Termos de Serviço
+                </Link>{' '}
+                e a{' '}
+                <Link to="/privacidade" target="_blank" className="text-copper underline hover:text-copper/80">
+                  Política de Privacidade
+                </Link>.
+              </span>
+            </label>
+
             <Button
               type="submit"
               variant="primary"
               className="w-full"
-              disabled={loading || codeStatus.state !== 'valid'}
+              disabled={!canSubmit}
             >
-              {loading ? 'A criar...' : 'Criar Conta'}
+              {loading ? 'A criar...' : 'Criar Conta Grátis'}
             </Button>
           </form>
 
@@ -210,9 +250,6 @@ export const SignupPage: React.FC = () => {
             <Link to="/login" className="text-ink font-bold hover:text-copper">
               Entrar
             </Link>
-          </p>
-          <p className="text-center text-xs text-ink2 mt-2">
-            Não tens código? Contacta-nos em <a href="mailto:ops@tukanapp.pt" className="underline">ops@tukanapp.pt</a>
           </p>
         </div>
       </div>
