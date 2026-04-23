@@ -21,6 +21,7 @@ import { DashboardPage } from './pages/owner/DashboardPage'
 import { FleetPage } from './pages/owner/FleetPage'
 import { BookingsPage } from './pages/owner/BookingsPage'
 import { DriversPage } from './pages/owner/DriversPage'
+import { DriverDetailPage } from './pages/owner/DriverDetailPage'
 import { FinancePage } from './pages/owner/FinancePage'
 import { SettingsPage } from './pages/owner/SettingsPage'
 import { OwnerSchedulePage } from './pages/owner/SchedulePage'
@@ -96,6 +97,7 @@ export default function App() {
           <Route path="/frota" element={<OwnerRoute><FleetPage /></OwnerRoute>} />
           <Route path="/reservas" element={<OwnerRoute><BookingsPage /></OwnerRoute>} />
           <Route path="/motoristas" element={<OwnerRoute><DriversPage /></OwnerRoute>} />
+          <Route path="/motoristas/:id" element={<OwnerRoute><DriverDetailPage /></OwnerRoute>} />
           <Route path="/financas" element={<OwnerRoute><FinancePage /></OwnerRoute>} />
           <Route path="/definicoes" element={<OwnerRoute><SettingsPage /></OwnerRoute>} />
           <Route path="/escala" element={<OwnerRoute><OwnerSchedulePage /></OwnerRoute>} />
