@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { OwnerLayout } from '../../components/OwnerLayout'
@@ -9,10 +10,12 @@ import { Input } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { Profile, Payment } from '../../lib/types'
 import { formatCurrency } from '../../lib/format'
-import { Plus, Trash2, Copy, Check } from 'lucide-react'
+import { Plus, Trash2, Copy, Check, ChevronRight } from 'lucide-react'
+import { StatusBadge } from '../../components/StatusBadge'
 
 export const DriversPage: React.FC = () => {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const [drivers, setDrivers] = useState<Profile[]>([])
   const [commissions, setCommissions] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
@@ -124,30 +127,35 @@ export const DriversPage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {drivers.map((driver) => (
-              <Card key={driver.id} className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-ink mb-1">{driver.full_name}</h3>
-                  <p className="text-sm text-ink2 mb-1">{driver.phone}</p>
-                  <p className="text-sm text-ink2 mb-2">Recebido: {formatCurrency(commissions[driver.id] || 0)}</p>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-ink2">Comissão %:</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.5"
-                      defaultValue={driver.commission_pct || 0}
-                      onBlur={async (e) => {
-                        const pct = parseFloat(e.target.value) || 0
-                        await supabase.from('profiles').update({ commission_pct: pct }).eq('id', driver.id)
-                      }}
-                      className="w-20 px-2 py-1 text-sm border border-line rounded-btn"
-                    />
+              <Card
+                key={driver.id}
+                className="flex items-center gap-4 cursor-pointer hover:shadow-card-md transition-all duration-200"
+                onClick={() => navigate(`/motoristas/${driver.id}`)}
+              >
+                <div className="w-12 h-12 rounded-full bg-yellow flex items-center justify-center text-ink font-black text-lg flex-shrink-0">
+                  {(driver.full_name || 'M').charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="text-lg font-bold text-ink truncate">{driver.full_name}</h3>
+                    <StatusBadge status={driver.status || 'offline'} size="sm" />
+                  </div>
+                  <p className="text-sm text-ink2">{driver.phone}</p>
+                  <div className="flex items-center gap-4 mt-1">
+                    <span className="text-xs text-ink2">Recebido: <span className="font-semibold text-ink">{formatCurrency(commissions[driver.id] || 0)}</span></span>
+                    <span className="text-xs text-ink2">Comissão: <span className="font-semibold text-ink">{driver.commission_pct || 0}%</span></span>
                   </div>
                 </div>
-                <Button onClick={() => handleDelete(driver.id)} variant="secondary" size="sm">
-                  <Trash2 size={16} />
-                </Button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(driver.id) }}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                  <ChevronRight size={20} className="text-ink2" />
+                </div>
               </Card>
             ))}
           </div>
