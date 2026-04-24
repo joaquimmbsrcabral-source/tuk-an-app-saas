@@ -11,6 +11,7 @@ import { LandingPage } from './pages/LandingPage'
 import { TermsPage } from './pages/TermsPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { BookingPage } from './pages/BookingPage'
+import { BlogPage, BlogArticlePage } from './pages/BlogPage'
 
 // Auth Pages
 import { LoginPage } from './pages/LoginPage'
@@ -88,6 +89,8 @@ export default function App() {
           <Route path="/termos" element={<TermsPage />} />
           <Route path="/privacidade" element={<PrivacyPage />} />
           <Route path="/book/:companyId" element={<BookingPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogArticlePage />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
