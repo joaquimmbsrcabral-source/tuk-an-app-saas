@@ -19,6 +19,12 @@ export type Company = {
   name: string
   nif: string
   default_commission_pct: number
+  plan: 'starter' | 'pro'
+  plan_max_tuktuks: number
+  plan_max_drivers: number
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  plan_updated_at: string | null
   created_at: string
 }
 
