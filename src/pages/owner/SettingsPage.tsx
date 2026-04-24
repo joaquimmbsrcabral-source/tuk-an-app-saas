@@ -8,12 +8,14 @@ import { Input, TextArea } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { Modal } from '../../components/Modal'
 import { TourCatalogItem } from '../../lib/types'
-import { Plus, Trash2, Edit2, Map } from 'lucide-react'
-import { formatCurrency } from '../../lib/format'
+import { Plus, Trash2, Edit2, Crown, Zap, Check } from 'lucide-react'
+import { Company } from '../../lib/types'
 
 export const SettingsPage: React.FC = () => {
   const { profile } = useAuth()
-  const [company, setCompany] = useState({ name: '', nif: '', default_commission_pct: 0 })
+  const [company, setCompany] = useState({ name: '', nif: '', default_commission_pct: 0, plan: 'starter' as 'starter' | 'pro', plan_max_tuktuks: 2, plan_max_drivers: 3 })
+  const [tuktuCount, setTuktuCount] = useState(0)
+  const [driverCount, setDriverCount] = useState(0)
   const [tours, setTours] = useState<TourCatalogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [savingCo, setSavingCo] = useState(false)
@@ -46,8 +48,23 @@ export const SettingsPage: React.FC = () => {
         name: data.name || '',
         nif: data.nif || '',
         default_commission_pct: data.default_commission_pct || 0,
+        plan: data.plan || 'starter',
+        plan_max_tuktuks: data.plan_max_tuktuks || 2,
+        plan_max_drivers: data.plan_max_drivers || 3,
       })
     }
+    // Count tuktuks and drivers for plan limits
+    const { count: ttCount } = await supabase
+      .from('tuktuks')
+      .select('*', { count: 'exact', head: true })
+      .eq('company_id', profile.company_id)
+    setTuktuCount(ttCount || 0)
+    const { count: drCount } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('company_id', profile.company_id)
+      .eq('role', 'driver')
+    setDriverCount(drCount || 0)
     setLoading(false)
   }
 
@@ -172,7 +189,7 @@ export const SettingsPage: React.FC = () => {
 
           {tours.length === 0 ? (
             <EmptyState
-              icon={<Map size={24} />}
+              icon="🗺️"
               title="Sem tours no catálogo"
               description="Adiciona o primeiro tour para começar a usar preços padrão nas reservas."
               action={{ label: 'Adicionar Tour', onClick: openNewTour }}
@@ -190,7 +207,7 @@ export const SettingsPage: React.FC = () => {
                     </div>
                     {t.description && <p className="text-sm text-ink2 mb-1">{t.description}</p>}
                     <p className="text-sm text-ink2">
-                      {formatCurrency(Number(t.default_price))} · {t.default_duration_min} min
+                      €{Number(t.default_price).toFixed(2)} · {t.default_duration_min} min
                     </p>
                   </div>
                   <div className="flex gap-1">
@@ -203,6 +220,91 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Billing Section */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              {company.plan === 'pro' ? (
+                <div className="w-10 h-10 rounded-xl bg-yellow bg-opacity-20 flex items-center justify-center">
+                  <Crown size={20} className="text-yellow" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-ink bg-opacity-5 flex items-center justify-center">
+                  <Zap size={20} className="text-ink" />
+                </div>
+              )}
+              <div>
+                <h2 className="text-xl font-bold text-ink">Plano {company.plan === 'pro' ? 'Pro' : 'Starter'}</h2>
+                <p className="text-sm text-ink2">
+                  {company.plan === 'pro' ? '29€/mês — TukTuks e motoristas ilimitados' : 'Gratuito — até 2 TukTuks e 3 motoristas'}
+                </p>
+              </div>
+            </div>
+            {company.plan === 'starter' && (
+              <Button variant="primary" size="sm" onClick={() => window.open('mailto:ops@tukanapp.pt?subject=Upgrade para Pro', '_blank')}>
+                <Crown size={16} className="mr-1" /> Upgrade Pro
+              </Button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="border border-line rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-ink">TukTuks</span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  tuktuCount >= company.plan_max_tuktuks && company.plan === 'starter'
+                    ? 'bg-copper bg-opacity-10 text-copper'
+                    : 'bg-green bg-opacity-10 text-green'
+                }`}>
+                  {tuktuCount}/{company.plan === 'pro' ? '∞' : company.plan_max_tuktuks}
+                </span>
+              </div>
+              <div className="w-full bg-line rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${
+                    tuktuCount >= company.plan_max_tuktuks && company.plan === 'starter' ? 'bg-copper' : 'bg-green'
+                  }`}
+                  style={{ width: company.plan === 'pro' ? '30%' : `${Math.min((tuktuCount / company.plan_max_tuktuks) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+            <div className="border border-line rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-ink">Motoristas</span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  driverCount >= company.plan_max_drivers && company.plan === 'starter'
+                    ? 'bg-copper bg-opacity-10 text-copper'
+                    : 'bg-green bg-opacity-10 text-green'
+                }`}>
+                  {driverCount}/{company.plan === 'pro' ? '∞' : company.plan_max_drivers}
+                </span>
+              </div>
+              <div className="w-full bg-line rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${
+                    driverCount >= company.plan_max_drivers && company.plan === 'starter' ? 'bg-copper' : 'bg-green'
+                  }`}
+                  style={{ width: company.plan === 'pro' ? '20%' : `${Math.min((driverCount / company.plan_max_drivers) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {company.plan === 'starter' && (
+            <div className="bg-yellow bg-opacity-5 border border-yellow border-opacity-20 rounded-xl p-4">
+              <h3 className="font-bold text-ink text-sm mb-2">Plano Pro inclui:</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {['TukTuks ilimitados', 'Motoristas ilimitados', 'Relatórios PDF', 'Widget de reservas', 'Integração WhatsApp', 'Suporte prioritário'].map((f) => (
+                  <div key={f} className="flex items-center gap-2 text-sm text-ink2">
+                    <Check size={14} className="text-green flex-shrink-0" />
+                    {f}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </Card>
