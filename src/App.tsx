@@ -10,6 +10,7 @@ inject()
 import { LandingPage } from './pages/LandingPage'
 import { TermsPage } from './pages/TermsPage'
 import { PrivacyPage } from './pages/PrivacyPage'
+import { BookingPage } from './pages/BookingPage'
 
 // Auth Pages
 import { LoginPage } from './pages/LoginPage'
@@ -86,6 +87,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/termos" element={<TermsPage />} />
           <Route path="/privacidade" element={<PrivacyPage />} />
+          <Route path="/book/:companyId" element={<BookingPage />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
