@@ -26,6 +26,7 @@ export const DriversPage: React.FC = () => {
     phone: '',
   })
   const [linkCopied, setLinkCopied] = useState(false)
+  const [planLimit, setPlanLimit] = useState({ maxDrivers: 3, plan: 'starter' as string })
 
   useEffect(() => {
     if (profile) {
@@ -56,6 +57,16 @@ export const DriversPage: React.FC = () => {
         comm[p.received_by] += Number(p.amount)
       })
       setCommissions(comm)
+
+      // Fetch plan limits
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('plan, plan_max_drivers')
+        .eq('id', profile.company_id)
+        .single()
+      if (companyData) {
+        setPlanLimit({ maxDrivers: companyData.plan_max_drivers || 3, plan: companyData.plan || 'starter' })
+      }
     } catch (err) {
       console.error('Error fetching drivers:', err)
     } finally {
@@ -111,7 +122,16 @@ export const DriversPage: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-ink">Motoristas</h1>
-          <Button onClick={() => setIsModalOpen(true)} variant="primary">
+          <Button
+            onClick={() => {
+              if (planLimit.plan === 'starter' && drivers.length >= planLimit.maxDrivers) {
+                alert(`Limite do plano Starter atingido (${planLimit.maxDrivers} motoristas). Faz upgrade para o plano Pro para adicionar mais.`)
+                return
+              }
+              setIsModalOpen(true)
+            }}
+            variant="primary"
+          >
             <Plus size={20} className="mr-2" />
             Convidar Motorista
           </Button>
