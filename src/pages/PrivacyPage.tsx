@@ -28,7 +28,7 @@ export function PrivacyPage() {
           <section>
             <h2 className="font-outfit font-bold text-xl text-ink mb-3">1. Responsável pelo Tratamento</h2>
             <p className="font-outfit text-sm text-ink2 leading-relaxed">
-              O responsável pelo tratamento dos dados pessoais recolhidos através da plataforma Tuk an App é a entidade que opera o serviço em www.tukanapp.pt. Para questões de privacidade, contacte-nos em{' '}
+              O responsável pelo tratamento dos dados pessoais recolhidos através da plataforma Tuk an App é Joaquim Cabral, empresário em nome individual, com sede em Lisboa, Portugal. Para questões de privacidade, contacte-nos em{' '}
               <a href="mailto:ops@tukanapp.pt" className="text-copper hover:underline">ops@tukanapp.pt</a>.
             </p>
           </section>
