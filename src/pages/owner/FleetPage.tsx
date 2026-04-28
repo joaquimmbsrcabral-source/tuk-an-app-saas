@@ -99,9 +99,9 @@ export const FleetPage: React.FC = () => {
       status: tk.status,
       color: tk.color,
       km: tk.km,
-      insurance_expiry: tk.insurance_expiry,
+      insurance_expiry: tk.insurance_expiry || '',
       next_service_km: tk.next_service_km,
-      notes: tk.notes,
+      notes: tk.notes || '',
     })
     setIsModalOpen(true)
   }
@@ -148,14 +148,14 @@ export const FleetPage: React.FC = () => {
               const serviceNeeded = tk.km >= tk.next_service_km - 500
 
               return (
-                <Card key={tk.id} className="flex items-start justify-between">
+                <Card key={tk.id} className="flex items-start justify-between cursor-pointer hover:border-copper transition-colors" onClick={() => handleEdit(tk)}>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-ink mb-1">{tk.nickname}</h3>
                     <p className="text-sm text-ink2 mb-2">Matrícula: {tk.plate}</p>
                     <p className="text-sm text-ink2 mb-2">Cor: {tk.color} | KM: {tk.km}</p>
                     <div className="flex gap-2 flex-wrap">
                       <span className={`text-xs px-2 py-1 rounded-btn ${tk.status === 'active' ? 'bg-green bg-opacity-10 text-green' : tk.status === 'maintenance' ? 'bg-yellow bg-opacity-10 text-ink' : 'bg-copper bg-opacity-10 text-copper'}`}>
-                        {tk.status === 'active' ? 'Ativo' : tk.status === 'maintenance' ? 'Manuten\u00e7\u00e3o' : tk.status === 'retired' ? 'Reformado' : tk.status}
+                        {tk.status === 'active' ? 'Ativo' : tk.status === 'maintenance' ? 'Manutenção' : tk.status === 'retired' ? 'Reformado' : tk.status}
                       </span>
                       {insuranceExpiring && (
                         <span className="text-xs px-2 py-1 rounded-btn bg-copper bg-opacity-10 text-copper flex items-center gap-1">
@@ -169,7 +169,7 @@ export const FleetPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button onClick={() => handleEdit(tk)} variant="ghost" size="sm">
                       Editar
                     </Button>
