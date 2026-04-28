@@ -467,7 +467,7 @@ export function LandingPage() {
                 Envie-nos um email
               </a>
               {' '}ou{' '}
-              <a href="https://wa.me/351912345678" target="_blank" rel="noopener noreferrer" className="text-copper hover:underline font-semibold">
+              <a href="https://wa.me/351915873799" target="_blank" rel="noopener noreferrer" className="text-copper hover:underline font-semibold">
                 fale connosco no WhatsApp
               </a>
             </p>
@@ -492,7 +492,7 @@ export function LandingPage() {
               Começar Grátis <ArrowRight size={20} />
             </Link>
             <a
-              href="https://wa.me/351912345678?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Tuk%20an%20App"
+              href="https://wa.me/351915873799?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Tuk%20an%20App"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-cream/10 text-cream border border-cream/20 px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-cream/20 transition-colors flex items-center justify-center gap-2"
@@ -534,7 +534,7 @@ export function LandingPage() {
                 <a href="mailto:ops@tukanapp.pt" className="block hover:text-cream transition-colors">
                   ops@tukanapp.pt
                 </a>
-                <a href="https://wa.me/351912345678" target="_blank" rel="noopener noreferrer" className="block hover:text-cream transition-colors">
+                <a href="https://wa.me/351915873799" target="_blank" rel="noopener noreferrer" className="block hover:text-cream transition-colors">
                   💬 WhatsApp
                 </a>
                 <Link to="/termos" className="block hover:text-cream transition-colors">Termos de Serviço</Link>
