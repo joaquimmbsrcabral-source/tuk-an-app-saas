@@ -6,7 +6,7 @@ const features = [
   {
     icon: CalendarDays,
     title: 'Reservas & Agenda',
-    description: 'Gerencie todas as reservas num calendário visual. Receba notificações, evite conflitos de horário e nunca perca um cliente.',
+    description: 'Organize todas as reservas num calendário visual. Receba notificações, evite conflitos de horário e nunca perca um cliente.',
   },
   {
     icon: Car,
@@ -48,7 +48,7 @@ const steps = [
   {
     number: '01',
     title: 'Crie a sua conta',
-    description: 'Registe-se com um código de convite e configure a sua empresa em minutos.',
+    description: 'Registe-se em segundos e configure a sua empresa em minutos. Sem código, sem complicações.',
   },
   {
     number: '02',
@@ -192,8 +192,8 @@ export function LandingPage() {
             <span>A plataforma feita para operadores de TukTuk</span>
           </div>
           <h1 className="font-outfit font-black text-4xl sm:text-6xl lg:text-7xl text-ink leading-tight">
-            Gerencie o seu negócio<br />
-            <span className="text-copper">de TukTuk</span>
+            Faça a gestão do seu<br />
+            negócio <span className="text-copper">de TukTuk</span>
           </h1>
           <p className="font-outfit text-lg sm:text-xl text-ink2 mt-6 max-w-2xl mx-auto leading-relaxed">
             Reservas, frota, motoristas e finanças — tudo numa única plataforma.
@@ -243,9 +243,19 @@ export function LandingPage() {
                 <div className="text-2xs sm:text-sm text-muted font-outfit mt-1">Motoristas</div>
               </div>
             </div>
-            <div className="mt-6 bg-cream rounded-btn p-6 text-center">
-              <BarChart3 size={48} className="mx-auto text-muted/40" />
-              <p className="text-sm text-muted font-outfit mt-3">Dashboard com métricas em tempo real</p>
+            <div className="mt-6 bg-cream rounded-btn p-6">
+              <div className="flex items-end justify-between gap-2 h-32">
+                {[35, 52, 45, 68, 72, 58, 85, 90, 78, 95, 88, 102].map((v, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className={`w-full rounded-t-sm ${i >= 10 ? 'bg-copper' : 'bg-yellow'}`}
+                      style={{ height: `${(v / 102) * 100}%` }}
+                    />
+                    <span className="text-[9px] text-muted font-outfit">{['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][i]}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted font-outfit mt-3 text-center">Receitas mensais — dados de exemplo</p>
             </div>
           </div>
         </div>
@@ -261,6 +271,33 @@ export function LandingPage() {
                 <div className="text-sm text-muted font-outfit mt-1">{s.label}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof */}
+      <section className="py-12 px-4 sm:px-6 bg-white border-t border-line">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-center text-sm font-outfit text-muted mb-8 uppercase tracking-wider font-semibold">A confiança de quem já usa</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="bg-cream rounded-card p-6 text-center">
+              <div className="text-3xl font-outfit font-black text-copper">50+</div>
+              <p className="text-sm text-ink2 font-outfit mt-1">Reservas geridas por semana</p>
+            </div>
+            <div className="bg-cream rounded-card p-6 text-center">
+              <div className="text-3xl font-outfit font-black text-copper">Lisboa</div>
+              <p className="text-sm text-ink2 font-outfit mt-1">Nasceu e opera nas ruas da capital</p>
+            </div>
+            <div className="bg-cream rounded-card p-6 text-center">
+              <div className="text-3xl font-outfit font-black text-copper">0€</div>
+              <p className="text-sm text-ink2 font-outfit mt-1">Para começar — sem cartão de crédito</p>
+            </div>
+          </div>
+          <div className="mt-8 bg-cream rounded-card p-6 max-w-2xl mx-auto">
+            <p className="font-outfit text-ink2 text-sm leading-relaxed italic text-center">
+              "Antes usávamos folhas de Excel e mensagens no WhatsApp para gerir os tours. Com o Tuk an App, temos tudo organizado num só sítio — reservas, motoristas, finanças. Poupamos horas por semana."
+            </p>
+            <p className="text-center mt-3 font-outfit text-xs text-muted font-semibold">— Operador de TukTuks em Lisboa</p>
           </div>
         </div>
       </section>
@@ -429,6 +466,10 @@ export function LandingPage() {
               <a href="mailto:ops@tukanapp.pt" className="text-copper hover:underline font-semibold">
                 Envie-nos um email
               </a>
+              {' '}ou{' '}
+              <a href="https://wa.me/351912345678" target="_blank" rel="noopener noreferrer" className="text-copper hover:underline font-semibold">
+                fale connosco no WhatsApp
+              </a>
             </p>
           </div>
         </div>
@@ -451,10 +492,12 @@ export function LandingPage() {
               Começar Grátis <ArrowRight size={20} />
             </Link>
             <a
-              href="mailto:ops@tukanapp.pt"
-              className="bg-cream/10 text-cream border border-cream/20 px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-cream/20 transition-colors"
+              href="https://wa.me/351912345678?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Tuk%20an%20App"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-cream/10 text-cream border border-cream/20 px-8 py-4 rounded-btn font-outfit font-bold text-lg hover:bg-cream/20 transition-colors flex items-center justify-center gap-2"
             >
-              Falar Connosco
+              💬 Falar no WhatsApp
             </a>
           </div>
         </div>
@@ -490,6 +533,9 @@ export function LandingPage() {
               <div className="space-y-2 text-sm font-outfit text-cream/60">
                 <a href="mailto:ops@tukanapp.pt" className="block hover:text-cream transition-colors">
                   ops@tukanapp.pt
+                </a>
+                <a href="https://wa.me/351912345678" target="_blank" rel="noopener noreferrer" className="block hover:text-cream transition-colors">
+                  💬 WhatsApp
                 </a>
                 <Link to="/termos" className="block hover:text-cream transition-colors">Termos de Serviço</Link>
                 <Link to="/privacidade" className="block hover:text-cream transition-colors">Política de Privacidade</Link>
