@@ -91,6 +91,40 @@ export const FinancePage: React.FC = () => {
     }
   }
 
+  /* ── Helpers ── */
+  const methodLabel = (m: string) => {
+    const map: Record<string, string> = {
+      cash: 'Dinheiro',
+      card: 'Cartão',
+      mbway: 'MB Way',
+      transfer: 'Transferência',
+      street: 'Venda Rua',
+      other: 'Outro',
+    }
+    return map[m] || m
+  }
+
+  const methodIcon = (m: string) => {
+    switch (m) {
+      case 'cash': return <Banknote size={14} className="text-green" />
+      case 'card': return <CreditCard size={14} className="text-copper" />
+      case 'mbway': return <Smartphone size={14} className="text-ink" />
+      case 'street': return <MapPin size={14} className="text-yellow" />
+      default: return <DollarSign size={14} className="text-ink2" />
+    }
+  }
+
+  const methodColor = (m: string): string => {
+    switch (m) {
+      case 'cash': return 'bg-green'
+      case 'card': return 'bg-copper'
+      case 'mbway': return 'bg-ink'
+      case 'street': return 'bg-yellow'
+      case 'transfer': return 'bg-ink2'
+      default: return 'bg-line'
+    }
+  }
+
   /* ── Unified revenue items ── */
   type RevenueItem = {
     id: string
@@ -227,40 +261,6 @@ export const FinancePage: React.FC = () => {
 
   /* ── Filtered total ── */
   const filteredTotal = filteredItems.reduce((s, i) => s + i.amount, 0)
-
-  /* ── Helpers ── */
-  const methodLabel = (m: string) => {
-    const map: Record<string, string> = {
-      cash: 'Dinheiro',
-      card: 'Cartão',
-      mbway: 'MB Way',
-      transfer: 'Transferência',
-      street: 'Venda Rua',
-      other: 'Outro',
-    }
-    return map[m] || m
-  }
-
-  const methodIcon = (m: string) => {
-    switch (m) {
-      case 'cash': return <Banknote size={14} className="text-green" />
-      case 'card': return <CreditCard size={14} className="text-copper" />
-      case 'mbway': return <Smartphone size={14} className="text-ink" />
-      case 'street': return <MapPin size={14} className="text-yellow" />
-      default: return <DollarSign size={14} className="text-ink2" />
-    }
-  }
-
-  const methodColor = (m: string): string => {
-    switch (m) {
-      case 'cash': return 'bg-green'
-      case 'card': return 'bg-copper'
-      case 'mbway': return 'bg-ink'
-      case 'street': return 'bg-yellow'
-      case 'transfer': return 'bg-ink2'
-      default: return 'bg-line'
-    }
-  }
 
   const exportCSV = () => {
     const headers = ['Data', 'Tipo', 'Método', 'Motorista', 'Valor', 'Gorjeta', 'Descrição']
@@ -530,7 +530,7 @@ export const FinancePage: React.FC = () => {
                 <option value="card">Cartão</option>
                 <option value="mbway">MB Way</option>
                 <option value="transfer">Transferência</option>
-                   <option value="street">Vendas de Rua</option>
+                <option value="street">Vendas de Rua</option>
               </select>
             </div>
           </div>
