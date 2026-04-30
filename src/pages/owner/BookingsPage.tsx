@@ -19,6 +19,7 @@ import {
   Users,
   MapPin,
   Clock,
+  Download,
 } from 'lucide-react'
 import {
   format,
@@ -170,8 +171,50 @@ export const BookingsPage: React.FC = () => {
     }
   }
 
+  /**
+   * Detecta sobreposições com reservas ativas para o mesmo TukTuk ou motorista.
+   * Devolve descrição legível dos conflitos (vazio = sem conflitos).
+   */
+  const findConflicts = (): string[] => {
+    if (!form.start_at || !form.end_at) return []
+    const newStart = new Date(form.start_at).getTime()
+    const newEnd = new Date(form.end_at).getTime()
+    if (isNaN(newStart) || isNaN(newEnd) || newEnd <= newStart) return []
+
+    const conflicts: string[] = []
+    bookings.forEach((b) => {
+      if (b.status === 'cancelled' || b.status === 'completed') return
+      const bStart = new Date(b.start_at).getTime()
+      const bEnd = new Date(b.end_at).getTime()
+      const overlaps = newStart < bEnd && newEnd > bStart
+      if (!overlaps) return
+
+      if (form.tuktuk_id && b.tuktuk_id === form.tuktuk_id) {
+        const tt = tuktuks.find((t) => t.id === form.tuktuk_id)
+        conflicts.push(`TukTuk ${tt?.nickname || tt?.plate || ''} já tem reserva (${b.customer_name}) das ${format(parseISO(b.start_at), 'HH:mm')} às ${format(parseISO(b.end_at), 'HH:mm')}.`)
+      }
+      if (form.driver_id && b.driver_id === form.driver_id) {
+        const drv = drivers.find((d) => d.id === form.driver_id)
+        conflicts.push(`Motorista ${drv?.full_name || ''} já tem reserva (${b.customer_name}) das ${format(parseISO(b.start_at), 'HH:mm')} às ${format(parseISO(b.end_at), 'HH:mm')}.`)
+      }
+    })
+    return conflicts
+  }
+
   const handleSave = async () => {
     if (!profile) return
+
+    // Conflict detection — pede confirmação se houver sobreposição
+    const conflicts = findConflicts()
+    if (conflicts.length > 0) {
+      const ok = window.confirm(
+        '⚠️ Conflito de reserva detectado:\n\n' +
+        conflicts.join('\n') +
+        '\n\nQueres mesmo assim guardar esta reserva?'
+      )
+      if (!ok) return
+    }
+
     setSaving(true)
     try {
       await supabase
@@ -251,6 +294,37 @@ export const BookingsPage: React.FC = () => {
     return bookingsByDate[key] || []
   }, [selectedDate, bookingsByDate])
 
+  const exportCSV = () => {
+    if (bookings.length === 0) return
+    const escape = (v: any) => {
+      const s = v == null ? '' : String(v)
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const statusMap: Record<string, string> = {
+      pending: 'Pendente', confirmed: 'Confirmada', in_progress: 'Em Curso',
+      completed: 'Completa', cancelled: 'Cancelada',
+    }
+    const headers = ['Data Início', 'Data Fim', 'Cliente', 'Telefone', 'Tour', 'Pax', 'Preço (€)', 'Estado', 'Motorista', 'TukTuk', 'Origem', 'Notas']
+    const rows = bookings.map((b) => {
+      const drv = drivers.find((d) => d.id === b.driver_id)
+      const tt = tuktuks.find((t) => t.id === b.tuktuk_id)
+      return [
+        b.start_at, b.end_at, b.customer_name, b.customer_phone,
+        b.tour_type, b.pax, Number(b.price).toFixed(2),
+        statusMap[b.status] || b.status, drv?.full_name || '',
+        tt?.nickname || tt?.plate || '', b.source, b.notes || '',
+      ].map(escape).join(',')
+    })
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `reservas-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const openNewForDate = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd'T'10:00")
     setForm({
@@ -312,6 +386,11 @@ export const BookingsPage: React.FC = () => {
                 <List size={16} />
               </button>
             </div>
+            {bookings.length > 0 && (
+              <Button onClick={exportCSV} variant="ghost" size="sm" title="Exportar CSV">
+                <Download size={18} className="mr-1" /> CSV
+              </Button>
+            )}
             <Button onClick={() => setIsModalOpen(true)} variant="primary">
               <Plus size={18} className="mr-1.5" />
               Nova Reserva
