@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -6,13 +6,12 @@ import { DriverLayout } from '../../components/DriverLayout'
 import { Card } from '../../components/Card'
 import { Button } from '../../components/Button'
 import { Input, Select, TextArea } from '../../components/Input'
-import { ArrowLeft, Calendar, Clock, Users, Minus, Plus } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Users, Minus, Plus, Sparkles } from 'lucide-react'
+import { TourCatalogItem } from '../../lib/types'
 
-const DEFAULT_TOURS = [
-  { name: 'Histórico', duration_min: 120, price: 180, emoji: '🏰' },
-  { name: 'New Lisbon', duration_min: 120, price: 180, emoji: '🌆' },
-  { name: 'Belém', duration_min: 150, price: 220, emoji: '⚓' },
-]
+// Pequena rota\u00e7\u00e3o de emojis para tornar os cart\u00f5es de tour visualmente distintos
+// quando a empresa n\u00e3o associa um emoji explicitamente.
+const TOUR_EMOJIS = ['\ud83c\udff0', '\ud83c\udf06', '\u2693', '\ud83d\udecd\ufe0f', '\ud83d\udd06', '\ud83c\udf3f', '\u2728', '\ud83c\udfa8']
 
 const DURATION_OPTIONS = [
   { min: 30, label: '30m' },
@@ -29,6 +28,8 @@ export const StreetSalePage: React.FC = () => {
   const navigate = useNavigate()
   const { profile } = useAuth()
   const [saving, setSaving] = useState(false)
+  const [tours, setTours] = useState<TourCatalogItem[]>([])
+  const [toursLoading, setToursLoading] = useState(true)
   const [selectedTourIdx, setSelectedTourIdx] = useState<number | null>(null)
   const todayStr = new Date().toISOString().slice(0, 10)
   const [form, setForm] = useState({
@@ -42,14 +43,32 @@ export const StreetSalePage: React.FC = () => {
     sold_date: todayStr,
   })
 
+  // Vai buscar o catálogo da empresa para que o motorista veja os tours reais
+  // (configurados pelo owner em Definições) em vez de tours genéricos.
+  useEffect(() => {
+    const fetchTours = async () => {
+      if (!profile) return
+      const { data } = await supabase
+        .from('tour_catalog')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .eq('active', true)
+        .order('default_price', { ascending: true })
+      setTours(data || [])
+      setToursLoading(false)
+    }
+    fetchTours()
+  }, [profile])
+
   const selectTour = (idx: number) => {
-    const tour = DEFAULT_TOURS[idx]
+    const tour = tours[idx]
+    if (!tour) return
     setSelectedTourIdx(idx)
     setForm((f) => ({
       ...f,
       tour_name: tour.name,
-      duration_min: tour.duration_min,
-      price: tour.price,
+      duration_min: tour.default_duration_min,
+      price: Number(tour.default_price),
     }))
   }
 
@@ -68,7 +87,7 @@ export const StreetSalePage: React.FC = () => {
     e.preventDefault()
     if (!profile) return
     if (!form.tour_name || form.price <= 0) {
-      alert('Escolhe o tour e preenche o preço.')
+      alert('Escolhe o tour e preenche o pre\u00e7o.')
       return
     }
     setSaving(true)
@@ -89,7 +108,7 @@ export const StreetSalePage: React.FC = () => {
     setSaving(false)
     if (error) {
       console.error(error)
-      alert('Não foi possível registar a venda. ' + error.message)
+      alert('N\u00e3o foi poss\u00edvel registar a venda. ' + error.message)
       return
     }
     navigate('/driver/today')
@@ -107,16 +126,20 @@ export const StreetSalePage: React.FC = () => {
 
         <div>
           <h1 className="text-2xl font-bold text-ink">Nova Venda de Rua</h1>
-          <p className="text-sm text-ink2 mt-1">Escolhe o tour ou personaliza abaixo</p>
+          <p className="text-sm text-ink2 mt-1">
+            {tours.length > 0 ? 'Escolhe o tour ou personaliza abaixo' : 'Personaliza os detalhes da venda'}
+          </p>
         </div>
 
-        {/* Tour Quick-Select Cards */}
-        <div className="grid grid-cols-3 gap-3">
-          {DEFAULT_TOURS.map((tour, idx) => {
+        {/* ── Tour Quick-Select Cards (catálogo da empresa) ── */}
+        {!toursLoading && tours.length > 0 && (
+        <div className={`grid gap-3 ${tours.length === 1 ? 'grid-cols-1' : tours.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+          {tours.map((tour, idx) => {
             const active = selectedTourIdx === idx
+            const emoji = TOUR_EMOJIS[idx % TOUR_EMOJIS.length]
             return (
               <button
-                key={tour.name}
+                key={tour.id}
                 type="button"
                 onClick={() => selectTour(idx)}
                 className={`relative flex flex-col items-center gap-1 p-4 rounded-2xl border-2 transition-all duration-150 active:scale-[0.96] ${
@@ -125,12 +148,12 @@ export const StreetSalePage: React.FC = () => {
                     : 'border-line bg-card hover:border-ink hover:border-opacity-20'
                 }`}
               >
-                <span className="text-2xl">{tour.emoji}</span>
+                <span className="text-2xl">{emoji}</span>
                 <span className="text-sm font-bold text-ink leading-tight text-center">
                   {tour.name}
                 </span>
-                <span className="text-xs text-ink2">{formatDuration(tour.duration_min)}</span>
-                <span className="text-base font-bold text-ink">{tour.price}€</span>
+                <span className="text-xs text-ink2">{formatDuration(tour.default_duration_min)}</span>
+                <span className="text-base font-bold text-ink">{Number(tour.default_price)}\u20ac</span>
                 {active && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow rounded-full flex items-center justify-center">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -142,11 +165,23 @@ export const StreetSalePage: React.FC = () => {
             )
           })}
         </div>
+        )}
+
+        {/* \u2500\u2500 Empty state: empresa ainda n\u00e3o tem tours configurados \u2500\u2500 */}
+        {!toursLoading && tours.length === 0 && (
+          <div className="rounded-2xl border-2 border-dashed border-line p-4 text-center">
+            <Sparkles size={20} className="mx-auto mb-2 text-yellow" />
+            <p className="text-sm text-ink2">
+              Ainda n\u00e3o h\u00e1 tours configurados. Pede ao teu owner para os adicionar em <span className="font-bold text-ink">Defini\u00e7\u00f5es \u2192 Cat\u00e1logo</span>.
+              Podes registar a venda \u00e0 m\u00e3o abaixo.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Tour Details */}
+          {/* ── Tour Details ── */}
           <Card>
-            {/* Date */}
+            {/* ── Date ── */}
             <div className="mb-4">
               <label className="block text-sm font-600 text-ink mb-2">
                 <Calendar size={14} className="inline mr-1 -mt-0.5" />
@@ -171,11 +206,11 @@ export const StreetSalePage: React.FC = () => {
               placeholder="Ex: City Tour"
             />
 
-            {/* Duration Pills */}
+            {/* ── Duration Pills ── */}
             <div className="mb-4">
               <label className="block text-sm font-600 text-ink mb-2">
                 <Clock size={14} className="inline mr-1 -mt-0.5" />
-                Duração
+                Dura\u00e7\u00e3o
               </label>
               <div className="flex flex-wrap gap-2">
                 {DURATION_OPTIONS.map((opt) => (
@@ -195,7 +230,7 @@ export const StreetSalePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Pax Stepper */}
+            {/* ── Pax Stepper ── */}
             <div className="mb-4">
               <label className="block text-sm font-600 text-ink mb-2">
                 <Users size={14} className="inline mr-1 -mt-0.5" />
@@ -220,9 +255,9 @@ export const StreetSalePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Price */}
+            {/* ── Price ── */}
             <Input
-              label="Preço total (€)"
+              label="Pre\u00e7o total (\u20ac)"
               type="number"
               step="5"
               value={form.price}
@@ -230,15 +265,15 @@ export const StreetSalePage: React.FC = () => {
             />
           </Card>
 
-          {/* Payment & Extras */}
+          {/* ── Payment & Extras ── */}
           <Card>
             <Select
               label="Pagamento"
               options={[
                 { value: 'cash', label: 'Dinheiro' },
                 { value: 'mbway', label: 'MB Way' },
-                { value: 'card', label: 'Cartão' },
-                { value: 'transfer', label: 'Transferência' },
+                { value: 'card', label: 'Cart\u00e3o' },
+                { value: 'transfer', label: 'Transfer\u00eancia' },
                 { value: 'other', label: 'Outro' },
               ]}
               value={form.payment_method}
@@ -246,7 +281,7 @@ export const StreetSalePage: React.FC = () => {
             />
 
             <Input
-              label="Gorjeta (€) — só tu vês"
+              label="Gorjeta (\u20ac) \u2014 s\u00f3 tu v\u00eas"
               type="number"
               step="0.5"
               value={form.tip_amount}
@@ -261,9 +296,9 @@ export const StreetSalePage: React.FC = () => {
             />
           </Card>
 
-          {/* Submit */}
+          {/* ── Submit ── */}
           <Button type="submit" variant="primary" size="lg" className="w-full" disabled={saving} loading={saving}>
-            {saving ? 'A guardar…' : 'Registar Venda'}
+            {saving ? 'A guardar\u2026' : 'Registar Venda'}
           </Button>
         </form>
       </div>
