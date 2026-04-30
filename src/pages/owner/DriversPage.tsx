@@ -10,7 +10,7 @@ import { Input } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { Profile, Payment } from '../../lib/types'
 import { formatCurrency } from '../../lib/format'
-import { Plus, Trash2, Copy, Check, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, Copy, Check, ChevronRight, Download } from 'lucide-react'
 import { StatusBadge } from '../../components/StatusBadge'
 
 export const DriversPage: React.FC = () => {
@@ -115,6 +115,30 @@ export const DriversPage: React.FC = () => {
     }
   }
 
+  const exportCSV = () => {
+    if (drivers.length === 0) return
+    const escape = (v: any) => {
+      const s = v == null ? '' : String(v)
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const headers = ['Nome', 'Telefone', 'Comissão %', 'Recebido (€)', 'Estado', 'Última atividade']
+    const statusMap: Record<string, string> = { available: 'Disponível', busy: 'Ocupado', offline: 'Offline' }
+    const rows = drivers.map((d) => [
+      d.full_name, d.phone, d.commission_pct || 0,
+      Number(commissions[d.id] || 0).toFixed(2),
+      statusMap[d.status || 'offline'] || d.status,
+      d.last_seen_at || '',
+    ].map(escape).join(','))
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `motoristas-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (loading) return <OwnerLayout><div className="text-center py-12">Carregando...</div></OwnerLayout>
 
   return (
@@ -122,19 +146,26 @@ export const DriversPage: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-ink">Motoristas</h1>
-          <Button
-            onClick={() => {
-              if (planLimit.plan === 'starter' && drivers.length >= planLimit.maxDrivers) {
-                alert(`Limite do plano Starter atingido (${planLimit.maxDrivers} motoristas). Faz upgrade para o plano Pro para adicionar mais.`)
-                return
-              }
-              setIsModalOpen(true)
-            }}
-            variant="primary"
-          >
-            <Plus size={20} className="mr-2" />
-            Convidar Motorista
-          </Button>
+          <div className="flex gap-2">
+            {drivers.length > 0 && (
+              <Button onClick={exportCSV} variant="ghost" size="sm" title="Exportar CSV">
+                <Download size={18} className="mr-1" /> CSV
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                if (planLimit.plan === 'starter' && drivers.length >= planLimit.maxDrivers) {
+                  alert(`Limite do plano Starter atingido (${planLimit.maxDrivers} motoristas). Faz upgrade para o plano Pro para adicionar mais.`)
+                  return
+                }
+                setIsModalOpen(true)
+              }}
+              variant="primary"
+            >
+              <Plus size={20} className="mr-2" />
+              Convidar Motorista
+            </Button>
+          </div>
         </div>
 
         {drivers.length === 0 ? (
