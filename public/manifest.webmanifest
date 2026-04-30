@@ -1,0 +1,48 @@
+{
+  "name": "Tuk an App",
+  "short_name": "Tuk an App",
+  "description": "Plataforma de gestão para operadores de TukTuk — reservas, frota, motoristas e finanças.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#F5C842",
+  "background_color": "#FFF8EE",
+  "lang": "pt-PT",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "travel"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Reservas",
+      "short_name": "Reservas",
+      "url": "/reservas",
+      "description": "Calendário de reservas"
+    },
+    {
+      "name": "Driver — Hoje",
+      "short_name": "Hoje",
+      "url": "/driver/today",
+      "description": "Tours do dia"
+    },
+    {
+      "name": "Venda de Rua",
+      "short_name": "Venda Rua",
+      "url": "/driver/street-sale",
+      "description": "Registar venda de rua"
+    }
+  ]
+}
