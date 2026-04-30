@@ -9,7 +9,7 @@ import { Input, TextArea, Select } from '../../components/Input'
 import { EmptyState } from '../../components/EmptyState'
 import { TukTuk } from '../../lib/types'
 import { formatDate } from '../../lib/format'
-import { AlertCircle, Plus, Trash2 } from 'lucide-react'
+import { AlertCircle, Plus, Trash2, Download } from 'lucide-react'
 
 export const FleetPage: React.FC = () => {
   const { profile } = useAuth()
@@ -99,9 +99,9 @@ export const FleetPage: React.FC = () => {
       status: tk.status,
       color: tk.color,
       km: tk.km,
-      insurance_expiry: tk.insurance_expiry || '',
+      insurance_expiry: tk.insurance_expiry,
       next_service_km: tk.next_service_km,
-      notes: tk.notes || '',
+      notes: tk.notes,
     })
     setIsModalOpen(true)
   }
@@ -112,6 +112,28 @@ export const FleetPage: React.FC = () => {
     setIsModalOpen(true)
   }
 
+  const exportCSV = () => {
+    if (tuktuks.length === 0) return
+    const escape = (v: any) => {
+      const s = v == null ? '' : String(v)
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const headers = ['Matrícula', 'Nome', 'Estado', 'Cor', 'KM', 'Seguro Expira', 'Próximo Serviço (KM)', 'Notas']
+    const statusMap: Record<string, string> = { active: 'Ativo', maintenance: 'Manutenção', retired: 'Reformado' }
+    const rows = tuktuks.map((t) => [
+      t.plate, t.nickname, statusMap[t.status] || t.status, t.color,
+      t.km, t.insurance_expiry, t.next_service_km, t.notes || '',
+    ].map(escape).join(','))
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `frota-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (loading) return <OwnerLayout><div className="text-center py-12">Carregando...</div></OwnerLayout>
 
   return (
@@ -119,19 +141,26 @@ export const FleetPage: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-ink">Frota</h1>
-          <Button
-            onClick={() => {
-              if (planLimit.plan === 'starter' && tuktuks.length >= planLimit.maxTuktuks) {
-                alert(`Limite do plano Starter atingido (${planLimit.maxTuktuks} TukTuks). Faz upgrade para o plano Pro para adicionar mais.`)
-                return
-              }
-              openNewModal()
-            }}
-            variant="primary"
-          >
-            <Plus size={20} className="mr-2" />
-            Novo TukTuk
-          </Button>
+          <div className="flex gap-2">
+            {tuktuks.length > 0 && (
+              <Button onClick={exportCSV} variant="ghost" size="sm" title="Exportar CSV">
+                <Download size={18} className="mr-1" /> CSV
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                if (planLimit.plan === 'starter' && tuktuks.length >= planLimit.maxTuktuks) {
+                  alert(`Limite do plano Starter atingido (${planLimit.maxTuktuks} TukTuks). Faz upgrade para o plano Pro para adicionar mais.`)
+                  return
+                }
+                openNewModal()
+              }}
+              variant="primary"
+            >
+              <Plus size={20} className="mr-2" />
+              Novo TukTuk
+            </Button>
+          </div>
         </div>
 
         {tuktuks.length === 0 ? (
