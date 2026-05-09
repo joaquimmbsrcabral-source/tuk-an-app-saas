@@ -29,6 +29,7 @@ import { SettingsPage } from './pages/owner/SettingsPage'
 import { OwnerSchedulePage } from './pages/owner/SchedulePage'
 import { SupportPage } from './pages/owner/SupportPage'
 import { AdminPage } from './pages/admin/AdminPage'
+import { BillingPage } from './pages/BillingPage'
 
 // Components
 import { SupportWidget } from './components/SupportWidget'
@@ -107,6 +108,7 @@ export default function App() {
           <Route path="/definicoes" element={<OwnerRoute><SettingsPage /></OwnerRoute>} />
           <Route path="/escala" element={<OwnerRoute><OwnerSchedulePage /></OwnerRoute>} />
           <Route path="/suporte" element={<OwnerRoute><SupportPage /></OwnerRoute>} />
+          <Route path="/upgrade" element={<OwnerRoute><BillingPage /></OwnerRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
           {/* Driver Routes */}
